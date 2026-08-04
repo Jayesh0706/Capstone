@@ -1,0 +1,101 @@
+<h2 class="sr-only">12-day sprint plan with daily tasks for Developer, Cloud Engineer, and DevOps Engineer across 4 phases</h2>
+<style>
+.sp-grid{display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:0;font-size:13px}
+.sp-day{background:var(--surface-1);padding:6px 8px;font-weight:500;display:flex;align-items:center;justify-content:center;border-bottom:0.5px solid var(--border);font-size:12px;color:var(--text-secondary)}
+.sp-cell{padding:8px 10px;border-bottom:0.5px solid var(--border);border-left:0.5px solid var(--border);line-height:1.45;color:var(--text-primary)}
+.sp-head{font-weight:500;font-size:13px;padding:8px 10px;border-bottom:1px solid var(--border-strong);color:var(--text-secondary);text-align:center}
+.sp-phase{grid-column:1/-1;padding:6px 12px;font-weight:500;font-size:12px;border-bottom:0.5px solid var(--border)}
+.sp-gate{grid-column:1/-1;padding:6px 12px;font-size:12px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:6px}
+.tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:500;margin-right:4px}
+.t-dev{background:#EEEDFE;color:#3C3489}
+.t-cloud{background:#E1F5EE;color:#085041}
+.t-ops{background:#FAECE7;color:#712B13}
+.t-gate{background:var(--bg-warning);color:var(--text-warning)}
+.t-phase{background:var(--bg-accent);color:var(--text-accent)}
+.check{color:var(--text-success);margin-right:2px}
+.sp-cell b{font-weight:500}
+@media(prefers-color-scheme:dark){.t-dev{background:#26215C;color:#CECBF6}.t-cloud{background:#04342C;color:#9FE1CB}.t-ops{background:#4A1B0C;color:#F5C4B3}}
+</style>
+
+<div class="sp-grid">
+<div class="sp-head"></div>
+<div class="sp-head"><span class="tag t-dev">DEV</span> Developer</div>
+<div class="sp-head"><span class="tag t-cloud">CLOUD</span> Cloud engineer</div>
+<div class="sp-head"><span class="tag t-ops">OPS</span> DevOps engineer</div>
+
+<div class="sp-phase"><span class="tag t-phase">Phase 1</span> Foundation + knowledge base (Day 1–3)</div>
+
+<div class="sp-day">D1</div>
+<div class="sp-cell"><b>Repo scaffold</b> — folder structure, pyproject.toml, CaseRecord pydantic model, docker-compose (local Neo4j + Azurite)</div>
+<div class="sp-cell"><b>Terraform layers 1–3</b> — Resource group, VNet, subnets, Storage account + containers, Key Vault</div>
+<div class="sp-cell"><b>GitHub repo + CI skeleton</b> — branch rules, Actions workflow (lint + type-check on push), .env.template</div>
+
+<div class="sp-day">D2</div>
+<div class="sp-cell"><b>CMS XML parser</b> — parse ICD-10 tabular XML into node/edge dicts for Neo4j (chapters, codes, excludes1/2, code-first)</div>
+<div class="sp-cell"><b>Terraform layers 4–5</b> — Cognitive Services (Doc Intel + OpenAI), AI Search, Functions App, App Service plan</div>
+<div class="sp-cell"><b>Neo4j provisioning script</b> — Docker on VM or AKS manifest, Bolt URI into Key Vault, test connectivity</div>
+
+<div class="sp-day">D3</div>
+<div class="sp-cell"><b>Guidelines chunker + search indexer</b> — chunk PDF by section, metadata tags (section_id, chapter, rule_type), push to AI Search</div>
+<div class="sp-cell"><b>Private endpoints + NSGs</b> — lock down Neo4j, Storage, Search, OpenAI to VNet only. Hand off .env.template to team</div>
+<div class="sp-cell"><b>KB build pipeline</b> — GitHub Action that runs XML parser + chunker + indexer end-to-end. Wire to dev env</div>
+
+<div class="sp-gate"><span class="tag t-gate">Gate 1</span> <span class="check"><i class="ti ti-check" aria-hidden="true"></i></span> Neo4j has all 22 chapters. AI Search returns chunks. Everyone can run locally + connect to Azure dev</div>
+
+<div class="sp-phase"><span class="tag t-phase">Phase 2</span> Rules engine + pipeline stages 1–7 (Day 4–7)</div>
+
+<div class="sp-day">D4</div>
+<div class="sp-cell"><b>Stages 1–2</b> — intake (file upload handler), ingest (Document Intelligence OCR+NER wrapper), output structured facts into CaseRecord</div>
+<div class="sp-cell"><b>Managed identity RBAC</b> — Functions → Storage, Search, OpenAI, Key Vault. Zero secrets in code</div>
+<div class="sp-cell"><b>Per-stage deploy pipeline</b> — CD that deploys only changed function stages. pytest integration in CI gate</div>
+
+<div class="sp-day">D5</div>
+<div class="sp-cell"><b>Stage 3 + rules engine core</b> — extract/classify encounter, Neo4j lookups. Build conventions.py, excludes_checker.py, chapter_mandates.py</div>
+<div class="sp-cell"><b>OpenAI deployment tuning</b> — GPT-4o model version, TPM quota, content filter config. Test endpoint from Functions</div>
+<div class="sp-cell"><b>Audit trail writer</b> — helper that writes stage artifacts to blob. Path convention: audit-trail/{case_id}/stage_N.json</div>
+
+<div class="sp-day">D6</div>
+<div class="sp-cell"><b>Stage 4 (hard elimination)</b> — Excludes1 = hard kill, Excludes2 = flag, Code First / Use Additional = sequence mandate. <b>Stage 5</b> — guideline retrieval (chapter-filtered AI Search query)</div>
+<div class="sp-cell"><b>AI Foundry workspace</b> — link to Functions, configure evaluation metrics (hallucination rate, citation accuracy, escalation rate)</div>
+<div class="sp-cell"><b>Test data creation</b> — 5 synthetic medical charts (PDFs) + candidate lists covering Section II rules A, B, C, G, H, K</div>
+
+<div class="sp-day">D7</div>
+<div class="sp-cell"><b>Stage 6 (LLM sequencer)</b> — prompt template, structured JSON output, hallucination guard (output ⊆ candidates). <b>Stage 7</b> — Section II A–K offline validator</div>
+<div class="sp-cell"><b>Integration testing</b> — full pipeline from blob upload → sequenced output on dev environment. Fix config issues</div>
+<div class="sp-cell"><b>Eval harness</b> — CI job that runs gold-standard test cases, reports pass/fail. Prompt versioning via git tags</div>
+
+<div class="sp-gate"><span class="tag t-gate">Gate 2</span> <span class="check"><i class="ti ti-check" aria-hidden="true"></i></span> Upload a test PDF → get sequenced diagnoses with citations. Eval harness runs green. Audit trail in blob</div>
+
+<div class="sp-phase"><span class="tag t-phase">Phase 3</span> Demo UX + coder review + integration (Day 8–10)</div>
+
+<div class="sp-day">D8</div>
+<div class="sp-cell"><b>Demo UX frontend</b> — upload chart + candidates → show sequenced output with per-position citations, collapsible audit trail</div>
+<div class="sp-cell"><b>App Service deployment</b> — deploy UX, configure custom domain/TLS if needed, App Insights dashboards</div>
+<div class="sp-cell"><b>Staging environment</b> — terraform apply staging.tfvars, deploy all stages, run eval suite against staging</div>
+
+<div class="sp-day">D9</div>
+<div class="sp-cell"><b>Stage 8 (coder review UI)</b> — accept/reorder/override with logged reason. <b>Stage 9</b> — final output assembly with audit links</div>
+<div class="sp-cell"><b>Monitoring dashboard</b> — per-stage latency, error rate, LLM token usage, coder override rate</div>
+<div class="sp-cell"><b>Demo env promotion</b> — terraform apply demo.tfvars, smoke tests, post-deploy validation suite</div>
+
+<div class="sp-day">D10</div>
+<div class="sp-cell"><b>End-to-end polish</b> — fix bugs from integration, improve error handling, edge case coverage in rules engine</div>
+<div class="sp-cell"><b>Cost analysis</b> — SKU sizing doc, monthly Azure cost estimate, scaling recommendations</div>
+<div class="sp-cell"><b>Operational runbook</b> — incident response, rollback procedures, secret rotation, KB refresh process</div>
+
+<div class="sp-gate"><span class="tag t-gate">Gate 3</span> <span class="check"><i class="ti ti-check" aria-hidden="true"></i></span> Demo UX works end-to-end on demo env. Coder can override. Full audit trail. Monitoring live</div>
+
+<div class="sp-phase"><span class="tag t-phase">Phase 4</span> Deliverables + demo prep (Day 11–12)</div>
+
+<div class="sp-day">D11</div>
+<div class="sp-cell"><b>Solution design doc</b> — architecture decisions, AI governance section, hallucination mitigation, evaluation strategy</div>
+<div class="sp-cell"><b>Deployment guide</b> — step-by-step terraform runbook, env setup, pre-reqs, another team can follow</div>
+<div class="sp-cell"><b>Lessons learned doc</b> — what worked, what didn't, reusability assessment, what to do differently</div>
+
+<div class="sp-day">D12</div>
+<div class="sp-cell"><b>Demo script + rehearsal</b> — prepare show & tell narrative, walk through 2 scenarios live, rehearse as team</div>
+<div class="sp-cell"><b>Architecture diagram</b> — final polished version matching actual deployed state, proposal-ready format</div>
+<div class="sp-cell"><b>Final tag + README</b> — release tag, clean README with quickstart, verify all deliverables committed</div>
+
+<div class="sp-gate"><span class="tag t-gate" style="background:var(--bg-success);color:var(--text-success)">DONE</span> <span class="check"><i class="ti ti-check" aria-hidden="true"></i></span> All 9 deliverables committed. Demo env live. Team rehearsed. Ready for show & tell</div>
+</div>
