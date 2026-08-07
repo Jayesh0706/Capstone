@@ -1,88 +1,24 @@
-Create three Terraform files in infra/modules/container_apps.
+Edit outputs.tf in infra/envs/dev. Keep the existing 
+storage_account_name output. Add these outputs:
 
-File 1, variables.tf, with these variables:
-- name_prefix (string)
-- location (string)
-- resource_group_name (string)
-- tags (map(string), default {})
-- backend_image (string, default "mcr.microsoft.com/k8se/quickstart:latest")
-- frontend_image (string, default "mcr.microsoft.com/k8se/quickstart:latest")
-Also add a required_providers block requiring azurerm ~> 4.0. 
-Do NOT add a provider configuration block.
-
-File 2, main.tf:
-- create an azurerm_container_app_environment named name_prefix plus 
-  "-env", in the given resource_group_name and location, tags = var.tags
-
-- create an azurerm_container_app named name_prefix plus "-backend":
-  container_app_environment_id from the environment,
-  resource_group_name from variable,
-  revision_mode = "Single",
-  an identity block with type = "SystemAssigned",
-  tags = var.tags,
-  a template with one container named "backend" using image = 
-  var.backend_image, cpu = 0.5, memory = "1Gi", 
-  and template min_replicas = 0, max_replicas = 1,
-  an ingress block with external_enabled = true, target_port = 80, 
-  and a traffic_weight block with percentage = 100 and 
-  latest_revision = true
-
-- create an azurerm_container_app named name_prefix plus "-frontend":
-  same environment and resource_group_name,
-  revision_mode = "Single",
-  an identity block with type = "SystemAssigned",
-  tags = var.tags,
-  a template with one container named "frontend" using image = 
-  var.frontend_image, cpu = 0.25, memory = "0.5Gi", 
-  and template min_replicas = 0, max_replicas = 1,
-  an ingress block with external_enabled = true, target_port = 80, 
-  and a traffic_weight block with percentage = 100 and 
-  latest_revision = true
-
-File 3, outputs.tf, outputting:
-- backend_fqdn (the backend's ingress fqdn)
-- frontend_fqdn (the frontend's ingress fqdn)
-- backend_identity_principal_id (the backend system-assigned 
-  identity principal_id)
-
-Show me the full content of each file and note any assumptions.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Edit main.tf in infra/envs/dev. Keep all existing blocks (locals, 
-resource group data, client config data, storage, keyvault, registry, 
-docintel modules) - do not remove or rewrite them. Add these two blocks:
-
-module "container_apps" {
-  source              = "../../modules/container_apps"
-  name_prefix         = "primaryddev"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  tags                = local.tags
+output "backend_fqdn" {
+  value = module.container_apps.backend_fqdn
 }
 
-resource "azurerm_key_vault_access_policy" "backend" {
-  key_vault_id       = module.keyvault.key_vault_id
-  tenant_id          = data.azurerm_client_config.current.tenant_id
-  object_id          = module.container_apps.backend_identity_principal_id
-  secret_permissions = ["Get", "List"]
+output "frontend_fqdn" {
+  value = module.container_apps.frontend_fqdn
 }
 
-Show me the full updated main.tf so I can confirm nothing else changed.
+output "key_vault_uri" {
+  value = module.keyvault.key_vault_uri
+}
 
+output "acr_login_server" {
+  value = module.registry.acr_login_server
+}
 
+output "docintel_endpoint" {
+  value = module.docintel.docintel_endpoint
+}
 
-
+Show me the full updated outputs.tf.
