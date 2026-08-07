@@ -1,31 +1,20 @@
-Create three Terraform files in my current folder infra/modules/keyvault.
+Edit my existing files in infra/envs/dev.
 
-File 1, variables.tf, declaring input variables:
-- name_prefix (string)
-- location (string)
-- resource_group_name (string)
-- tenant_id (string)
-- admin_object_id (string)
-Also add a required_providers block requiring azurerm ~> 4.0. 
-Do NOT add a provider configuration block.
+1. In main.tf, add a locals block at the top:
+   locals {
+     tags = {
+       project     = "primarydiagnosis"
+       environment = "dev"
+       managed_by  = "terraform"
+     }
+   }
 
-File 2, main.tf, that creates an azurerm_key_vault:
-- name = name_prefix plus "kv" (must be 3 to 24 chars, lowercase 
-  alphanumeric and hyphens)
-- location and resource_group_name from variables
-- tenant_id from variable
-- sku_name = "standard"
-- IMPORTANT: use access policy mode, NOT RBAC. Set 
-  enable_rbac_authorization = false
-- add one access_policy block granting the admin_object_id these 
-  secret permissions: Get, List, Set, Delete, Purge
-- set the access_policy tenant_id to the tenant_id variable
+2. In the existing "storage" module call, add this argument:
+   tags = local.tags
+   Also change its name_prefix argument to "primaryddev"
 
-File 3, outputs.tf, outputting:
-- key_vault_id (the vault id)
-- key_vault_uri (the vault uri)
+3. In the existing "keyvault" module call, add this argument:
+   tags = local.tags
+   Also change its name_prefix argument to "primaryddev"
 
-Create only these three files. Do not configure a provider. 
-Do not create a resource group. Do not create any secrets yet.
-
-Show me the full content of each file and note any assumptions.
+Do not change anything else. Show me the full updated main.tf.
