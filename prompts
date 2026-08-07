@@ -1,15 +1,35 @@
-Edit Terraform files in two module folders.
+Create three Terraform files in infra/modules/registry.
 
-In infra/modules/storage:
-- In variables.tf, add a variable "tags" of type map(string) with 
-  default {}
-- In main.tf, add "tags = var.tags" to the azurerm_storage_account 
-  resource (storage containers and queues do not take tags, leave 
-  those alone)
+File 1, variables.tf: variables name_prefix (string), location 
+(string), resource_group_name (string), tags (map(string) default {}). 
+Add required_providers azurerm ~> 4.0. No provider config block.
 
-In infra/modules/keyvault:
-- In variables.tf, add a variable "tags" of type map(string) with 
-  default {}
-- In main.tf, add "tags = var.tags" to the azurerm_key_vault resource
+File 2, main.tf: create an azurerm_container_registry named 
+name_prefix plus "acr" (lowercase alphanumeric only), in the given 
+resource_group_name and location, sku = "Basic", admin_enabled = false, 
+tags = var.tags.
 
-Show me the full updated variables.tf and main.tf for both modules.
+File 3, outputs.tf: output acr_login_server and acr_id.
+
+Show me the full content of each file.
+
+
+
+
+
+
+
+
+Edit main.tf in infra/envs/dev. Keep all existing blocks (locals, 
+resource group data, client config data, storage module, keyvault 
+module) - do not remove or rewrite them. Add one module call:
+
+module "registry" {
+  source              = "../../modules/registry"
+  name_prefix         = "primaryddev"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  tags                = local.tags
+}
+
+Show me the full updated main.tf so I can confirm nothing else changed.
