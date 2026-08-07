@@ -1,18 +1,13 @@
-Create three Terraform files in infra/modules/docintel.
+Edit main.tf in infra/envs/dev. Keep all existing blocks (locals, 
+resource group data, client config data, storage, keyvault, registry 
+modules) - do not remove or rewrite them. Add one module call:
 
-File 1, variables.tf: variables name_prefix (string), location 
-(string), resource_group_name (string), tags (map(string) default {}). 
-Add required_providers azurerm ~> 4.0. No provider config block.
+module "docintel" {
+  source              = "../../modules/docintel"
+  name_prefix         = "primaryddev"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  tags                = local.tags
+}
 
-File 2, main.tf: create an azurerm_cognitive_account:
-- name = name_prefix plus "-docintel"
-- location and resource_group_name from variables
-- kind = "FormRecognizer"
-- sku_name = "S0"
-- tags = var.tags
-
-File 3, outputs.tf: output:
-- docintel_endpoint (the endpoint attribute)
-- docintel_id (the id)
-
-Show me the full content of each file and note any assumptions.
+Show me the full updated main.tf so I can confirm nothing else changed.
