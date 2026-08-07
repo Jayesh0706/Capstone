@@ -1,13 +1,71 @@
-Create a file named main.tf in my current folder infra/bootstrap. 
-It should be a Terraform file that:
-- uses the azurerm provider version ~> 4.0
-- in the provider block, sets features {} and 
+Create three Terraform files in my current folder infra/modules/storage.
+
+File 1, variables.tf, declaring these input variables:
+- name_prefix (string) - a prefix for resource names
+- location (string)
+- resource_group_name (string)
+Also add a required_providers block requiring azurerm ~> 4.0 
+(do NOT add a provider block that configures azurerm).
+
+File 2, main.tf, that:
+- creates an azurerm_storage_account using name_prefix plus "cases" 
+  as the account name (lowercase, no hyphens), in the given 
+  resource_group_name and location, Standard tier, LRS replication, 
+  min_tls_version TLS1_2, allow_nested_items_to_be_public false
+- creates a private azurerm_storage_container named "cases" in it
+- creates an azurerm_storage_queue named "cases-queue" in it
+
+File 3, outputs.tf, outputting:
+- storage_account_name (the account name)
+- storage_account_id (the account id)
+
+Create only these three files. Do not configure a provider. 
+Do not create a resource group.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Create three Terraform files in my current folder infra/envs/dev.
+
+File 1, providers.tf, containing:
+- a terraform block with required_providers azurerm ~> 4.0
+- a backend "azurerm" block inside the terraform block with:
+  resource_group_name = "GENAI-B5-Project-T3-RG"
+  storage_account_name = "genaib5t3tfstate"
+  container_name = "tfstate"
+  key = "dev.tfstate"
+- a provider "azurerm" block with features {} and 
   resource_provider_registrations = "none"
-- uses a data block to read an existing resource group named 
-  GENAI-B5-Project-T3-RG (do not create it)
-- creates a storage account named genaib5t3tfstate in that group, 
-  using the group's location, Standard tier, LRS replication, 
-  min_tls_version TLS1_2, and allow_nested_items_to_be_public false
-- creates a private storage container named tfstate in that account
-- outputs the storage account name
-Create only this one file. Do not add other files.
+
+File 2, main.tf, that:
+- reads the existing resource group GENAI-B5-Project-T3-RG using a data block
+- calls a module named "storage" from source "../../modules/storage"
+  passing name_prefix = "genaib5t3", location and resource_group_name 
+  from the data block
+
+File 3, outputs.tf, outputting the storage module's 
+storage_account_name.
+
+Create only these three files.
+
+
+
+
+
+
+
+
+
