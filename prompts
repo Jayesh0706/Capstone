@@ -1,11 +1,18 @@
-Edit main.tf in infra/modules/storage. Keep everything already there 
-(the storage account, the existing "cases" container, the queue) - do 
-not remove or change them. Add one new resource:
+Create three Terraform files in infra/modules/docintel.
 
-resource "azurerm_storage_container" "charts" {
-  name                  = "charts"
-  storage_account_id    = azurerm_storage_account.cases.id
-  container_access_type = "private"
-}
+File 1, variables.tf: variables name_prefix (string), location 
+(string), resource_group_name (string), tags (map(string) default {}). 
+Add required_providers azurerm ~> 4.0. No provider config block.
 
-Show me the full updated main.tf so I can confirm nothing else changed.
+File 2, main.tf: create an azurerm_cognitive_account:
+- name = name_prefix plus "-docintel"
+- location and resource_group_name from variables
+- kind = "FormRecognizer"
+- sku_name = "S0"
+- tags = var.tags
+
+File 3, outputs.tf: output:
+- docintel_endpoint (the endpoint attribute)
+- docintel_id (the id)
+
+Show me the full content of each file and note any assumptions.
