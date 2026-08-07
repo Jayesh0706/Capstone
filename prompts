@@ -1,71 +1,31 @@
-Create three Terraform files in my current folder infra/modules/storage.
+Create three Terraform files in my current folder infra/modules/keyvault.
 
-File 1, variables.tf, declaring these input variables:
-- name_prefix (string) - a prefix for resource names
+File 1, variables.tf, declaring input variables:
+- name_prefix (string)
 - location (string)
 - resource_group_name (string)
-Also add a required_providers block requiring azurerm ~> 4.0 
-(do NOT add a provider block that configures azurerm).
+- tenant_id (string)
+- admin_object_id (string)
+Also add a required_providers block requiring azurerm ~> 4.0. 
+Do NOT add a provider configuration block.
 
-File 2, main.tf, that:
-- creates an azurerm_storage_account using name_prefix plus "cases" 
-  as the account name (lowercase, no hyphens), in the given 
-  resource_group_name and location, Standard tier, LRS replication, 
-  min_tls_version TLS1_2, allow_nested_items_to_be_public false
-- creates a private azurerm_storage_container named "cases" in it
-- creates an azurerm_storage_queue named "cases-queue" in it
+File 2, main.tf, that creates an azurerm_key_vault:
+- name = name_prefix plus "kv" (must be 3 to 24 chars, lowercase 
+  alphanumeric and hyphens)
+- location and resource_group_name from variables
+- tenant_id from variable
+- sku_name = "standard"
+- IMPORTANT: use access policy mode, NOT RBAC. Set 
+  enable_rbac_authorization = false
+- add one access_policy block granting the admin_object_id these 
+  secret permissions: Get, List, Set, Delete, Purge
+- set the access_policy tenant_id to the tenant_id variable
 
 File 3, outputs.tf, outputting:
-- storage_account_name (the account name)
-- storage_account_id (the account id)
+- key_vault_id (the vault id)
+- key_vault_uri (the vault uri)
 
 Create only these three files. Do not configure a provider. 
-Do not create a resource group.
+Do not create a resource group. Do not create any secrets yet.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Create three Terraform files in my current folder infra/envs/dev.
-
-File 1, providers.tf, containing:
-- a terraform block with required_providers azurerm ~> 4.0
-- a backend "azurerm" block inside the terraform block with:
-  resource_group_name = "GENAI-B5-Project-T3-RG"
-  storage_account_name = "genaib5t3tfstate"
-  container_name = "tfstate"
-  key = "dev.tfstate"
-- a provider "azurerm" block with features {} and 
-  resource_provider_registrations = "none"
-
-File 2, main.tf, that:
-- reads the existing resource group GENAI-B5-Project-T3-RG using a data block
-- calls a module named "storage" from source "../../modules/storage"
-  passing name_prefix = "genaib5t3", location and resource_group_name 
-  from the data block
-
-File 3, outputs.tf, outputting the storage module's 
-storage_account_name.
-
-Create only these three files.
-
-
-
-
-
-
-
-
-
+Show me the full content of each file and note any assumptions.
