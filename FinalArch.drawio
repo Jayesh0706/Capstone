@@ -1,0 +1,228 @@
+<mxfile host="app.diagrams.net" agent="Claude">
+  <diagram id="pdx-arch-01" name="Azure Architecture">
+    <mxGraphModel dx="1106" dy="784" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="880" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;" value="&lt;b&gt;&lt;font style=&quot;font-size: 18px;&quot; color=&quot;#1F3864&quot;&gt;Principal Diagnosis Sequencing Accelerator — Azure Architecture&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot; color=&quot;#666666&quot;&gt;Deterministic-first ICD-10-CM sequencing with cited justification · human-in-the-loop by design&lt;/font&gt;" vertex="1">
+          <mxGeometry height="44" width="820" x="40" y="8" as="geometry" />
+        </mxCell>
+        <mxCell id="obsGroup" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;dashPattern=4 4;fillColor=#FBFBFB;strokeColor=#9E9E9E;verticalAlign=top;fontSize=11;align=left;spacingLeft=10;spacingTop=4;" value="&lt;b&gt;Cross-cutting — Observability &amp;amp; Governance&lt;/b&gt;" vertex="1">
+          <mxGeometry height="138" width="780" x="380" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="svcMonitor" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=10;image=img/lib/azure2/management_governance/Monitor.svg;labelBackgroundColor=none;verticalLabelPosition=bottom;verticalAlign=top;" value="Azure Monitor" vertex="1">
+          <mxGeometry height="50" width="50" x="430" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="svcAppIns" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=10;image=img/lib/azure2/devops/Application_Insights.svg;labelBackgroundColor=none;verticalLabelPosition=bottom;verticalAlign=top;" value="Application Insights&#xa;(traces per stage)" vertex="1">
+          <mxGeometry height="50" width="50" x="608" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="svcFoundry" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=10;image=img/lib/azure2/ai_machine_learning/Machine_Learning.svg;labelBackgroundColor=none;verticalLabelPosition=bottom;verticalAlign=top;" value="Azure AI Foundry&#xa;(metrics + LLM evaluation)" vertex="1">
+          <mxGeometry height="50" width="50" x="790" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="svcKV" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=10;image=img/lib/azure2/security/Key_Vaults.svg;labelBackgroundColor=none;verticalLabelPosition=bottom;verticalAlign=top;" value="Key Vault&#xa;(secrets)" vertex="1">
+          <mxGeometry height="50" width="46" x="1002" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=10;" value="Clinical coder / user" vertex="1">
+          <mxGeometry height="60" width="40" x="160" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="blobIn" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=10;image=img/lib/azure2/storage/Storage_Accounts.svg;labelBackgroundColor=none;verticalLabelPosition=bottom;verticalAlign=top;" value="Blob Storage — landing&#xa;(chart PDF + candidate list)" vertex="1">
+          <mxGeometry height="52" width="56" x="152" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="eventGrid" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=10;image=img/lib/azure2/integration/Event_Grid_Topics.svg;labelBackgroundColor=none;verticalLabelPosition=bottom;verticalAlign=top;" value="Event Grid&#xa;(BlobCreated)" vertex="1">
+          <mxGeometry height="52" width="56" x="152" y="452" as="geometry" />
+        </mxCell>
+        <mxCell id="acaBox" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F8FD;strokeColor=#0F6CBD;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=11;fontColor=#1F3864;" value="&lt;b&gt;Azure Container Apps — diagnosis sequencing pipeline (stages 2–7, event-driven, scale-to-zero)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="360" width="780" x="380" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="acaIcon" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;image=img/lib/azure2/containers/Worker_Container_App.svg;" value="" vertex="1">
+          <mxGeometry height="36" width="40" x="1108" y="248" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#107C10;strokeWidth=2;fontSize=11;" value="&lt;b&gt;2. Ingest — OCR + NER&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot; color=&quot;#555555&quot;&gt;Azure Document Intelligence&lt;/font&gt;" vertex="1">
+          <mxGeometry height="64" width="215" x="400" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="p3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#107C10;strokeWidth=2;fontSize=11;" value="&lt;b&gt;3. Extract &amp;amp; classify&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot; color=&quot;#555555&quot;&gt;encounter type · facts · candidates&lt;/font&gt;" vertex="1">
+          <mxGeometry height="64" width="215" x="650" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="p4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#107C10;strokeWidth=2;fontSize=11;" value="&lt;b&gt;4. Hard elimination&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot; color=&quot;#555555&quot;&gt;conventions + chapter mandates (deterministic)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="64" width="215" x="900" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="p5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#107C10;strokeWidth=2;fontSize=11;" value="&lt;b&gt;5. Guideline retrieval&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot; color=&quot;#555555&quot;&gt;chapter-filtered · cached case record&lt;/font&gt;" vertex="1">
+          <mxGeometry height="64" width="215" x="400" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="p6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8F0;strokeColor=#E65100;strokeWidth=2;fontSize=11;" value="&lt;b&gt;6. Reason &amp;amp; sequence&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot; color=&quot;#555555&quot;&gt;gated mandate + UHDDS steps (LLM on pre-filtered set)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="64" width="215" x="650" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="p7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8F0;strokeColor=#E65100;strokeWidth=2;fontSize=11;" value="&lt;b&gt;7. Validate&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot; color=&quot;#555555&quot;&gt;Section II A–K offline rules + LLM-as-Judge&lt;/font&gt;" vertex="1">
+          <mxGeometry height="64" width="215" x="900" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="aiSvcGroup" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;dashPattern=4 4;fillColor=#FBFBFB;strokeColor=#9E9E9E;verticalAlign=top;fontSize=11;align=left;spacingLeft=10;spacingTop=4;" value="&lt;b&gt;Azure AI services&lt;/b&gt;" vertex="1">
+          <mxGeometry height="172" width="300" x="388" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="svcDocInt" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=10;image=img/lib/azure2/ai_machine_learning/Form_Recognizers.svg;labelBackgroundColor=none;verticalLabelPosition=bottom;verticalAlign=top;" value="Document Intelligence&#xa;(OCR + NER)" vertex="1">
+          <mxGeometry height="52" width="52" x="425" y="698" as="geometry" />
+        </mxCell>
+        <mxCell id="svcAOAI" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=10;image=img/lib/azure2/ai_machine_learning/Cognitive_Services.svg;labelBackgroundColor=none;verticalLabelPosition=bottom;verticalAlign=top;" value="Azure OpenAI&#xa;(sequencer + judge)" vertex="1">
+          <mxGeometry height="52" width="52" x="564" y="698" as="geometry" />
+        </mxCell>
+        <mxCell id="kbGroup" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;dashPattern=4 4;fillColor=#F7F4FC;strokeColor=#7B1FA2;verticalAlign=top;fontSize=11;align=left;spacingLeft=10;spacingTop=4;fontColor=#4A148C;" value="&lt;b&gt;Knowledge base — built once from CMS Tabular XML + Guidelines PDF (read-only at runtime)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="172" width="430" x="730" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="svcSearch" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=10;image=img/lib/azure2/app_services/Search_Services.svg;labelBackgroundColor=none;verticalLabelPosition=bottom;verticalAlign=top;" value="Azure AI Search&#xa;(Section I.C guideline chunks)" vertex="1">
+          <mxGeometry height="52" width="52" x="772" y="698" as="geometry" />
+        </mxCell>
+        <mxCell id="neo4j" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontSize=10;" value="&lt;b&gt;Neo4j graph&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;conventions · Excludes1/2 · chapter mandates · code hierarchy&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="150" x="928" y="686" as="geometry" />
+        </mxCell>
+        <mxCell id="coderUI" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=10;image=img/lib/azure2/app_services/App_Services.svg;labelBackgroundColor=none;verticalLabelPosition=bottom;verticalAlign=top;" value="8. Coder review UI — App Service/&lt;div&gt;container apps&lt;br&gt;(human-in-the-loop, required stage)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="64" width="64" x="1282" y="298" as="geometry" />
+        </mxCell>
+        <mxCell id="finalOut" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1F8E9;strokeColor=#558B2F;strokeWidth=2;fontSize=11;" value="&lt;b&gt;9. Final output&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot; color=&quot;#33691E&quot;&gt;sequenced diagnoses + guideline citation + rationale per position&lt;/font&gt;" vertex="1">
+          <mxGeometry height="66" width="210" x="1235" y="452" as="geometry" />
+        </mxCell>
+        <mxCell id="blobAudit" parent="1" style="sketch=0;aspect=fixed;html=1;points=[];align=center;image;fontSize=10;image=img/lib/azure2/storage/Storage_Accounts.svg;labelBackgroundColor=none;verticalLabelPosition=bottom;verticalAlign=top;" value="Blob Storage&#xa;(stage artifacts + audit trail)" vertex="1">
+          <mxGeometry height="52" width="56" x="1312" y="588" as="geometry" />
+        </mxCell>
+        <mxCell id="nlmBox" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;dashPattern=4 4;fillColor=#FCE4EC;strokeColor=#C2185B;fontSize=10;fontColor=#880E4F;" value="&lt;b&gt;NLM ICD-10-CM API&lt;/b&gt; (external, non-critical)&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;term fallback · coder autocomplete · annual KB freshness check · no PHI leaves boundary · pipeline runs offline if down&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="230" x="1282" y="758" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#BDBDBD;align=left;spacingLeft=10;spacingTop=4;verticalAlign=top;fontSize=10;" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#0F6CBD&quot;&gt;━&lt;/font&gt; main data flow&lt;br&gt;&lt;font color=&quot;#107C10&quot;&gt;▢&lt;/font&gt; deterministic stage (rules first)&lt;br&gt;&lt;font color=&quot;#E65100&quot;&gt;▢&lt;/font&gt; LLM-assisted (pre-filtered set only)&lt;br&gt;&lt;font color=&quot;#7B1FA2&quot;&gt;━&lt;/font&gt; knowledge-base lookup&lt;br&gt;&lt;font color=&quot;#8C8C8C&quot;&gt;┅&lt;/font&gt; service call / telemetry&lt;br&gt;&lt;font color=&quot;#C2185B&quot;&gt;┅&lt;/font&gt; external, non-critical, no PHI" vertex="1">
+          <mxGeometry height="150" width="240" x="60" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="actor" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F6CBD;strokeWidth=2;fontSize=10;labelBackgroundColor=#FFFFFF;" target="blobIn" value="1. Intake: upload chart + candidate list">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="blobIn" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F6CBD;strokeWidth=2;fontSize=10;labelBackgroundColor=#FFFFFF;" target="eventGrid" value="BlobCreated event">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="eventGrid" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F6CBD;strokeWidth=2;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="p2" value="auto-trigger">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="478" />
+              <mxPoint x="300" y="332" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="p2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F6CBD;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="p3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="p3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F6CBD;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="p4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="p4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F6CBD;strokeWidth=2;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="p5" value="surviving candidates">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1007" y="420" />
+              <mxPoint x="507" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="p5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F6CBD;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="p6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="p6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F6CBD;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="p7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="p7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F6CBD;strokeWidth=2;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="coderUI" value="justified sequence + citations">
+          <mxGeometry relative="1" x="0.0834" y="16" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1225" y="502" />
+              <mxPoint x="1225" y="335" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="coderUI" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F6CBD;strokeWidth=2;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="finalOut" value="approve / edit / escalate">
+          <mxGeometry relative="1" x="0.3043" y="3" as="geometry">
+            <mxPoint x="-1" as="offset" />
+            <Array as="points">
+              <mxPoint x="1309" y="354.37" />
+              <mxPoint x="1427" y="354.37" />
+              <mxPoint x="1427" y="452" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e17" edge="1" parent="1" source="finalOut" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#0F6CBD;strokeWidth=2;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="blobAudit" value="persist">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="p2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#8C8C8C;dashed=1;fontSize=9;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;entryX=0;entryY=0.5;startArrow=classic;startFill=1;" target="svcDocInt" value="OCR + NER">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="356" y="332" />
+              <mxPoint x="356" y="724" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="p5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#7B1FA2;strokeWidth=1.5;fontSize=9;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;entryX=0.5;entryY=0;startArrow=classic;startFill=1;" target="svcSearch" value="chapter-filtered chunks (cached)">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="507" y="628" />
+              <mxPoint x="798" y="628" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="p4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#7B1FA2;strokeWidth=1.5;fontSize=9;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=1;entryY=0.5;startArrow=classic;startFill=1;" target="neo4j" value="conventions · Excludes1/2 · mandates">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1178" y="332" />
+              <mxPoint x="1178" y="731" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="p7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#7B1FA2;strokeWidth=1.5;fontSize=9;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;entryX=0.5;entryY=0;startArrow=classic;startFill=1;" target="neo4j" value="Section II A–K checks (offline)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="p6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#E65100;dashed=1;fontSize=9;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;entryX=0.35;entryY=0;" target="svcAOAI" value="sequence within rule-legal set">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="757" y="610" />
+              <mxPoint x="582" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="p7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#E65100;dashed=1;fontSize=9;labelBackgroundColor=#FFFFFF;exitX=0.2;exitY=1;entryX=0.75;entryY=0;" target="svcAOAI" value="LLM-as-Judge">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="943" y="655" />
+              <mxPoint x="603" y="655" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e19" edge="1" parent="1" source="acaBox" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#8C8C8C;dashed=1;fontSize=9;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" target="obsGroup" value="logs · traces · LLM evals">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e18" edge="1" parent="1" source="acaBox" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#8C8C8C;dashed=1;fontSize=9;labelBackgroundColor=#FFFFFF;exitX=0.991;exitY=0.929;entryX=0;entryY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" target="blobAudit" value="per-stage artifact written at every stage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" edge="1" parent="1" source="nlmBox" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#C2185B;dashed=1;fontSize=9;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.4;entryX=1;entryY=0.5;" target="kbGroup" value="annual KB freshness check · term fallback">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e21" edge="1" parent="1" source="nlmBox" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#C2185B;dashed=1;fontSize=9;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" target="coderUI" value="code autocomplete (no PHI)">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1520" y="761" />
+              <mxPoint x="1520" y="335" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="JmBGNpCT2siR3JYDzIgp-2" edge="1" parent="1" source="coderUI" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.024;exitY=0.438;exitDx=0;exitDy=0;fontSize=12;startSize=8;endSize=8;dashed=1;dashPattern=8 8;endArrow=classic;endFill=1;exitPerimeter=0;" target="p7">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1283.57" y="353.57" />
+              <mxPoint x="1124.43" y="353.57" />
+              <mxPoint x="1124.43" y="415.57" />
+              <mxPoint x="1030.14" y="415.57" />
+              <mxPoint x="1030.14" y="469.86" />
+            </Array>
+            <mxPoint x="1037" y="473.96" as="sourcePoint" />
+            <mxPoint x="1263.062" y="308.99999999999994" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="JmBGNpCT2siR3JYDzIgp-3" connectable="0" parent="JmBGNpCT2siR3JYDzIgp-2" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;" value="Not approved" vertex="1">
+          <mxGeometry relative="1" x="-0.2668" as="geometry">
+            <mxPoint x="-79" y="63" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
