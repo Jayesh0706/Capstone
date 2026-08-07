@@ -1,0 +1,13 @@
+Create a file named main.tf in my current folder infra/bootstrap. 
+It should be a Terraform file that:
+- uses the azurerm provider version ~> 4.0
+- in the provider block, sets features {} and 
+  resource_provider_registrations = "none"
+- uses a data block to read an existing resource group named 
+  GENAI-B5-Project-T3-RG (do not create it)
+- creates a storage account named genaib5t3tfstate in that group, 
+  using the group's location, Standard tier, LRS replication, 
+  min_tls_version TLS1_2, and allow_nested_items_to_be_public false
+- creates a private storage container named tfstate in that account
+- outputs the storage account name
+Create only this one file. Do not add other files.
