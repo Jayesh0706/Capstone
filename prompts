@@ -1,1 +1,23 @@
-terraform import "module.keyvault.azurerm_key_vault_access_policy.admin" "/subscriptions/c84b9ad1-e3bd-486e-ac95-d9288b9ff535/resourceGroups/GENAI-B5-Project-T3-RG/providers/Microsoft.KeyVault/vaults/primaryddevkv/objectId/97befe21-c76a-4f9b-bd22-87164668ef5a"
+Edit variables.tf in infra/envs/dev (create the file if it does not 
+exist). Add this variable, keep any existing content:
+
+variable "developer_object_id" {
+  type    = string
+  default = ""
+}
+
+Show me the file.
+
+
+
+Edit main.tf in infra/envs/dev. Keep all existing blocks unchanged - 
+do not remove or rewrite them. Add one new resource:
+
+resource "azurerm_key_vault_access_policy" "developer" {
+  key_vault_id       = module.keyvault.key_vault_id
+  tenant_id          = data.azurerm_client_config.current.tenant_id
+  object_id          = var.developer_object_id
+  secret_permissions = ["Get", "List"]
+}
+
+Show me the full updated main.tf so I can confirm nothing else changed.
