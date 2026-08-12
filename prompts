@@ -1,12 +1,1 @@
-Edit main.tf in infra/modules/cosmos. In the 
-azurerm_cosmosdb_sql_container resource, REMOVE the 
-vector_embedding_policy block and the vector_index block entirely 
-(including any indexing_policy wrapper if it only contained the vector 
-index). Keep everything else: the container name, partition_key_paths, 
-resource_group_name, account_name, database_name. 
 
-Also confirm: does this azurerm provider version support 
-vector_embedding_policy on cosmosdb containers? If you know the correct 
-syntax for the installed version, show it; otherwise remove it cleanly.
-
-Show me the full updated main.tf.
