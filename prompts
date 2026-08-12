@@ -1,68 +1,12 @@
-Create three Terraform files in infra/modules/cosmos.
+Edit main.tf in infra/modules/cosmos. In the 
+azurerm_cosmosdb_sql_container resource, REMOVE the 
+vector_embedding_policy block and the vector_index block entirely 
+(including any indexing_policy wrapper if it only contained the vector 
+index). Keep everything else: the container name, partition_key_paths, 
+resource_group_name, account_name, database_name. 
 
-File 1, variables.tf, with variables:
-- name_prefix (string)
-- location (string)
-- resource_group_name (string)
-- tags (map(string), default {})
-- database_name (string, default "Icd10_kb")
-- container_name (string, default "guideline_chunks")
-- vector_dimension (number, default 3072)
-Add required_providers azurerm ~> 4.0. No provider config block.
+Also confirm: does this azurerm provider version support 
+vector_embedding_policy on cosmosdb containers? If you know the correct 
+syntax for the installed version, show it; otherwise remove it cleanly.
 
-File 2, main.tf:
-- create an azurerm_cosmosdb_account:
-  name = name_prefix plus "-cosmos" (lowercase),
-  location and resource_group_name from variables,
-  offer_type = "Standard",
-  kind = "GlobalDocumentDB",
-  a capabilities block with name = "EnableServerless",
-  a capabilities block with name = "EnableNoSQLVectorSearch",
-  consistency_policy with consistency_level = "Session",
-  a geo_location block with location = var.location and failover_priority = 0,
-  tags = var.tags
-
-- create an azurerm_cosmosdb_sql_database:
-  name = var.database_name,
-  resource_group_name from variable,
-  account_name = the cosmosdb account name
-
-- create an azurerm_cosmosdb_sql_container:
-  name = var.container_name,
-  resource_group_name from variable,
-  account_name = the account name,
-  database_name = the database name,
-  partition_key_paths = ["/id"],
-  with a vector embedding on path "/embedding", data_type "float32",
-  distance_function "cosine", dimensions = var.vector_dimension,
-  and a matching vector index (type diskANN) on path "/embedding"
-
-File 3, outputs.tf, outputting:
-- cosmos_endpoint (the account endpoint)
-- cosmos_account_name (the account name)
-- cosmos_id (the account id)
-
-Show me the full content of each file and note any assumptions or any
-attribute names that differ in the current azurerm provider version.
-
-
-
-
-
-
-
-
-
-
-Edit main.tf in infra/envs/dev. Keep all existing blocks unchanged.
-Add one module call:
-
-module "cosmos" {
-  source              = "../../modules/cosmos"
-  name_prefix         = "primaryddev"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  tags                = local.tags
-}
-
-Show me the full updated main.tf so I can confirm nothing else changed.
+Show me the full updated main.tf.
