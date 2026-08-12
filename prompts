@@ -1,45 +1,21 @@
-
-Make two changes.
-
-CHANGE 1 - Container app ports. In infra/modules/container_apps/main.tf, 
-set the ingress target_port for the backend container app to 8000, and 
-the ingress target_port for the frontend container app to 3000. If these 
-are variables, set the values so backend uses 8000 and frontend uses 3000.
-
-CHANGE 2 - Key Vault access policies. In infra/envs/dev/main.tf, ensure 
-there are exactly these three azurerm_key_vault_access_policy resources, 
-each using module.keyvault.key_vault_id and 
+Edit infra/envs/dev/main.tf. There must be FOUR 
+azurerm_key_vault_access_policy resources (do not remove any). Each uses 
+key_vault_id = module.keyvault.key_vault_id and tenant_id = 
 data.azurerm_client_config.current.tenant_id:
 
-resource "azurerm_key_vault_access_policy" "admin" {
-  key_vault_id       = module.keyvault.key_vault_id
-  tenant_id          = data.azurerm_client_config.current.tenant_id
-  object_id          = "97befe21-c76a-4f9b-bd22-87164668ef5a"
-  secret_permissions = ["Get", "List", "Set", "Delete", "Purge"]
-}
+1. "admin" - object_id = "97befe21-c76a-4f9b-bd22-87164668ef5a", 
+   secret_permissions = ["Get","List","Set","Delete","Purge"]
 
-resource "azurerm_key_vault_access_policy" "developer" {
-  key_vault_id       = module.keyvault.key_vault_id
-  tenant_id          = data.azurerm_client_config.current.tenant_id
-  object_id          = var.developer_object_id
-  secret_permissions = ["Get", "List"]
-}
+2. "backend" - object_id = 
+   module.container_apps.backend_identity_principal_id, 
+   secret_permissions = ["Get","List"]
+   (THIS IS THE BACKEND APP IDENTITY c1bf9fe5... - it must be restored, 
+   not removed)
 
-resource "azurerm_key_vault_access_policy" "tl" {
-  key_vault_id       = module.keyvault.key_vault_id
-  tenant_id          = data.azurerm_client_config.current.tenant_id
-  object_id          = var.tl_object_id
-  secret_permissions = ["Get", "List"]
-}
+3. "developer" - object_id = var.developer_object_id, 
+   secret_permissions = ["Get","List"]
 
-Also in infra/envs/dev/variables.tf, add a variable "tl_object_id" of 
-type string (keep the existing developer_object_id). 
+4. "tl" - object_id = "55ce4415-3ee4-4149-adae-8bfb35a988a4", 
+   secret_permissions = ["Get","List"]
 
-If the keyvault MODULE (infra/modules/keyvault/main.tf) contains an 
-inline admin access_policy or a hardcoded object_id like 
-55ce4415-3ee4-4149-adae-8bfb35a988a4, remove that inline policy so the 
-only admin policy is the separate resource above with object_id 
-97befe21. Provider version is azurerm ~> 4.0.
-
-Show me the full updated main.tf files and variables.tf, and point out 
-where 55ce4415 appeared if it did.
+Show me the full main.tf and confirm all four policies are present.
