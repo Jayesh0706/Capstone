@@ -1,24 +1,24 @@
-In infra/modules/container_apps/main.tf, every "secret" block currently has a 
-key_vault_secret_id hardcoded to the domain "https://primaryddevkv.vault.azure.net/", 
-for example:
+In infra/modules/container_apps/main.tf and variables.tf, parameterize the following 
+currently-hardcoded values as new variables. For each, add the variable to variables.tf 
+with a default equal to the CURRENT hardcoded dev value (so dev keeps working unchanged), 
+then replace the hardcoded usage in main.tf with the variable reference.
 
-  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/neo4j-password"
+Variables to add (name, current hardcoded default value):
+1. azure_storage_account_url - default "https://genaib5t3cases.blob.core.windows.net/"
+2. azure_doc_intelligence_endpoint - default "https://primaryddev-docintel-1e963.cognitiveservices.azure.com/"
+3. neo4j_uri - default "neo4j+ssc://be5ccf2a.databases.neo4j.io"
+4. neo4j_user - default (find current hardcoded value in main.tf)
+5. azure_foundry_project_endpoint - default (find current hardcoded value in main.tf)
+6. foundry_inference_endpoint - default (find current hardcoded value in main.tf)
+7. cosmos_endpoint - default "https://primaryddev-cosmos.documents.azure.com:443/"
+8. backend_base_url - default "https://primaryddev-backend.gentlepond-2a87df60.eastus.azurecontainerapps.io"
+9. acr_login_server - default "primaryddevacr.azurecr.io"
+10. acr_username - default "primaryddevacr"
+11. acr_password_secret_name - default "primaryddevacrazurecrio-primaryddevacr"
 
-Replace every occurrence of the hardcoded domain "https://primaryddevkv.vault.azure.net/" 
-with "${var.key_vault_uri}" so the line above becomes:
+Do NOT touch the key_vault_uri variable (already done). Do NOT change min_replicas, 
+max_replicas, or any scaling settings. Do NOT modify infra/envs/dev/main.tf or 
+infra/envs/stage/main.tf — only the module files themselves.
 
-  key_vault_secret_id = "${var.key_vault_uri}secrets/neo4j-password"
-
-Do this for all secret blocks in the file (there are approximately 6). 
-
-Then, in infra/modules/container_apps/variables.tf, add this new variable declaration, 
-placed near the other variables (after the "location" variable):
-
-variable "key_vault_uri" {
-  type        = string
-  description = "URI of the Key Vault to pull secrets from (e.g. https://<name>.vault.azure.net/)."
-}
-
-Do NOT change anything else in either file — no other hardcoded values, no scaling 
-settings, no ACR or Cosmos or Doc Intelligence references. Only the key_vault_secret_id 
-lines and the new variable declaration.
+After making changes, run a search to confirm no hardcoded "primaryddev" strings remain 
+in main.tf except inside variable defaults in variables.tf.
