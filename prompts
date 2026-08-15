@@ -1,15 +1,18 @@
-Edit infra/modules/container_apps/main.tf. In BOTH the backend and 
-frontend azurerm_container_app resources, add a secret block that 
-supplies the ACR registry password. The secret name must exactly match 
-what the registry block's password_secret_name references, which is:
-"primaryddevacrazurecrio-primaryddevacr"
+Edit infra/envs/dev/main.tf. Add a Key Vault access policy for the 
+frontend container app's managed identity:
 
-Add to both apps:
-
-secret {
-  name                = "primaryddevacrazurecrio-primaryddevacr"
-  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/acr-password"
-  identity            = "System"
+resource "azurerm_key_vault_access_policy" "frontend" {
+  key_vault_id       = module.keyvault.key_vault_id
+  tenant_id          = data.azurerm_client_config.current.tenant_id
+  object_id          = module.container_apps.frontend_identity_principal_id
+  secret_permissions = ["Get", "List"]
 }
 
-Keep all existing secret and env blocks. Show me the file.
+Keep all existing access policies (admin, backend, developer, tl).
+
+Also check infra/modules/container_apps/outputs.tf - if it does not 
+already output frontend_identity_principal_id (the frontend 
+azurerm_container_app's system-assigned identity principal_id), add 
+that output.
+
+Show me both files.
