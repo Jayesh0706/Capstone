@@ -1,18 +1,1 @@
-Edit infra/envs/dev/main.tf. Add a Key Vault access policy for the 
-frontend container app's managed identity:
-
-resource "azurerm_key_vault_access_policy" "frontend" {
-  key_vault_id       = module.keyvault.key_vault_id
-  tenant_id          = data.azurerm_client_config.current.tenant_id
-  object_id          = module.container_apps.frontend_identity_principal_id
-  secret_permissions = ["Get", "List"]
-}
-
-Keep all existing access policies (admin, backend, developer, tl).
-
-Also check infra/modules/container_apps/outputs.tf - if it does not 
-already output frontend_identity_principal_id (the frontend 
-azurerm_container_app's system-assigned identity principal_id), add 
-that output.
-
-Show me both files.
+terraform import "azurerm_key_vault_access_policy.frontend" "/subscriptions/c84b9ad1-e3bd-486e-ac95-d9288b9ff535/resourceGroups/GENAI-B5-Project-T3-RG/providers/Microsoft.KeyVault/vaults/primaryddevkv/objectId/b44ea417-de4d-4e84-a91e-0014be59b75e"
