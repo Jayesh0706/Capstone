@@ -1,20 +1,22 @@
-In infra/modules/container_apps/main.tf and variables.tf, two things still cause stage 
-to reference dev's live resources:
+In infra/modules/container_apps/main.tf, at line 270, the frontend container app has 
+an env block:
 
-1. The variables "backend_image" and "frontend_image" in variables.tf currently default 
-   to "primaryddevacr.azurecr.io/backend:411" and "primaryddevacr.azurecr.io/webapp:411".
-   These are fine as DEV-matching defaults (don't remove them), but confirm they are 
-   properly declared as variables with no other hardcoding of these image strings 
-   anywhere else in main.tf.
+  BACKEND_BASE_URL = var.backend_base_url
 
-2. There is a "backend_base_url" variable already added, defaulting to 
-   "https://primaryddev-backend.gentlepond-2a87df60.eastus.azurecontainerapps.io". 
-   Find where this variable is used in main.tf (likely as a frontend env var, something 
-   like BACKEND_BASE_URL). Do NOT change the variable or its default — instead, show me 
-   the exact main.tf line(s) where var.backend_base_url is used, and tell me: does the 
-   backend container app in this same module expose an output or resource attribute 
-   (like azurerm_container_app.backend.latest_revision_fqdn) that could self-reference 
-   the backend's own URL instead of relying on an external variable? 
+Replace this with a self-reference to the backend container app created in this same 
+module, so it no longer depends on an external variable:
 
-Do not make any changes. Just report back what you find so I can decide how to fix the 
-self-referential backend URL problem.
+  BACKEND_BASE_URL = "https://${azurerm_container_app.backend.ingress[0].fqdn}"
+
+Then, in variables.tf, remove the "backend_base_url" variable declaration entirely, 
+since it is no longer used anywhere.
+
+After making this change, confirm no other references to var.backend_base_url remain 
+anywhere in the module.
+
+
+
+
+grep -n "backend_base_url" infra/modules/container_apps/*.tf
+
+grep -n "ingress\[0\].fqdn" infra/modules/container_apps/main.tf
