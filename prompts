@@ -1,61 +1,38 @@
-Edit infra/modules/container_apps/main.tf. In the BACKEND 
-azurerm_container_app resource ONLY (do not touch frontend), add:
+Edit infra/modules/container_apps/main.tf and infra/modules/registry/main.tf 
+to match what is currently live in Azure:
 
-A) Secret blocks at the resource level:
+REGISTRY module:
+- admin_enabled = true (not false)
 
-secret {
-  name                = "neo4j-password"
-  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/neo4j-password"
-  identity            = "System"
-}
-secret {
-  name                = "cosmos-key"
-  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/cosmos-key"
-  identity            = "System"
-}
-secret {
-  name                = "cosmos-connection"
-  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/cosmos-connection"
-  identity            = "System"
-}
-secret {
-  name                = "backend-api-key"
-  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/backend-api-key"
-  identity            = "System"
-}
+CONTAINER APPS module - BACKEND:
+- image: use variable defaulting to "primaryddevacr.azurecr.io/backend:411"
+- ingress target_port = 8000
+- min_replicas = 1, max_replicas = 10
+- add a registry block: server = "primaryddevacr.azurecr.io", 
+  username = "primaryddevacr", password_secret_name = 
+  "primaryddevacrazurecrio-primaryddevacr"
+- add http_scale_rule: name = "http-scaler", concurrent_requests = 10
+- KEEP all the env blocks and secret blocks that are being added
 
-B) Inside the backend's container block, add env blocks.
+CONTAINER APPS module - FRONTEND:
+- image: variable defaulting to "primaryddevacr.azurecr.io/webapp:411"
+- ingress target_port = 5000
+- min_replicas = 1, max_replicas = 10
+- same registry block
+- add http_scale_rule: name = "http-scaler", concurrent_requests = 10
+- add these env blocks (currently live, must not be removed):
+  MAX_UPLOAD_MB = "32"
+  MAX_CHART_TEXT_CHARS = "100000"
+  WEBAPP_SECRET_KEY -> secret_name "webapp-secret"
+  BACKEND_BASE_URL = "https://primaryddev-backend.gentlepond-2a87df60.eastus.azurecontainerapps.io"
+  BACKEND_API_KEY -> secret_name "backend-api-key"
+  FLASK_ENV = "production"
+- add secret blocks for webapp-secret and backend-api-key
 
-Secret-backed (secret_name):
-env { name = "NEO4J_PASSWORD"           secret_name = "neo4j-password" }
-env { name = "COSMOS_KEY"               secret_name = "cosmos-key" }
-env { name = "COSMOS_CONNECTION_STRING" secret_name = "cosmos-connection" }
-env { name = "BACKEND_API_KEY"          secret_name = "backend-api-key" }
+Also add to BOTH container apps:
+  lifecycle {
+    ignore_changes = [template[0].container[0].image]
+  }
+so the pipeline can manage images without Terraform reverting them.
 
-Plain values (value):
-env { name = "AZURE_KEY_VAULT_URI"             value = "https://primaryddevkv.vault.azure.net/" }
-env { name = "AZURE_STORAGE_ACCOUNT_URL"       value = "https://genaib5t3cases.blob.core.windows.net/" }
-env { name = "AZURE_BLOB_CONTAINER"            value = "charts" }
-env { name = "AZURE_JOBS_PREFIX"               value = "jobs" }
-env { name = "AZURE_CHARTS_PREFIX"             value = "charts" }
-env { name = "AZURE_DOC_INTELLIGENCE_ENDPOINT" value = "https://primaryddev-docintel-1e963.cognitiveservices.azure.com/" }
-env { name = "NEO4J_URI"                       value = "neo4j+ssc://be5ccf2a.databases.neo4j.io" }
-env { name = "NEO4J_USER"                      value = "be5ccf2a" }
-env { name = "AZURE_FOUNDRY_PROJECT_ENDPOINT"  value = "https://foundry-ms-resource.services.ai.azure.com/api/projects/primary-diagnosis" }
-env { name = "FOUNDRY_AGENT_STRUCTURING_ID"    value = "vlm-agent" }
-env { name = "FOUNDRY_AGENT_REASONING_ID"      value = "reasoning-agent" }
-env { name = "FOUNDRY_AGENT_REVALIDATION_ID"   value = "revalidation-agent" }
-env { name = "FOUNDRY_INFERENCE_ENDPOINT"      value = "https://foundry-ms-resource.openai.azure.com" }
-env { name = "FOUNDRY_EMBEDDING_DEPLOYMENT"    value = "text-embedding-3-large" }
-env { name = "FOUNDRY_EMBEDDING_DIMENSIONS"    value = "3072" }
-env { name = "COSMOS_ENDPOINT"                 value = "https://primaryddev-cosmos.documents.azure.com:443/" }
-env { name = "COSMOS_DATABASE"                 value = "icd10_kb" }
-env { name = "COSMOS_GUIDELINES_CONTAINER"     value = "guideline_chunks" }
-env { name = "REQUIRE_API_KEY"                 value = "true" }
-env { name = "CORS_ORIGINS"                    value = "*" }
-env { name = "MAX_UPLOAD_MB"                   value = "32" }
-env { name = "MAX_REASONING_ATTEMPTS"          value = "2" }
-
-Write each env block with name and value/secret_name on separate lines 
-using proper HCL syntax. Do not modify the frontend container app.
-Show me the full updated main.tf.
+Show me both files.
