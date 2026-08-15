@@ -1,1 +1,18 @@
 terraform import "azurerm_key_vault_access_policy.frontend" "/subscriptions/c84b9ad1-e3bd-486e-ac95-d9288b9ff535/resourceGroups/GENAI-B5-Project-T3-RG/providers/Microsoft.KeyVault/vaults/primaryddevkv/objectId/b44ea417-de4d-4e84-a91e-0014be59b75e"
+
+
+
+
+
+Edit infra/modules/container_apps/main.tf. In the FRONTEND 
+azurerm_container_app resource, remove:
+
+1. The secret block named "webapp-secret"
+2. The env block for WEBAPP_SECRET_KEY that references secret_name 
+   "webapp-secret"
+
+Keep all other secret blocks (backend-api-key, the ACR registry 
+password secret) and all other env blocks (MAX_UPLOAD_MB, 
+MAX_CHART_TEXT_CHARS, BACKEND_BASE_URL, BACKEND_API_KEY, FLASK_ENV).
+
+Show me the full updated main.tf.
