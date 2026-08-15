@@ -1,23 +1,20 @@
-In infra/envs/stage/main.tf, the "module container_apps" block currently only passes 
-these 4 arguments: source, name_prefix, location, resource_group_name, tags.
+In infra/modules/container_apps/main.tf and variables.tf, two things still cause stage 
+to reference dev's live resources:
 
-Add the following additional arguments to this same module block, so it passes stage's 
-own resource values instead of falling back to the module's dev-matching defaults:
+1. The variables "backend_image" and "frontend_image" in variables.tf currently default 
+   to "primaryddevacr.azurecr.io/backend:411" and "primaryddevacr.azurecr.io/webapp:411".
+   These are fine as DEV-matching defaults (don't remove them), but confirm they are 
+   properly declared as variables with no other hardcoding of these image strings 
+   anywhere else in main.tf.
 
-  key_vault_uri                   = module.keyvault.key_vault_uri
-  azure_storage_account_url       = module.storage.storage_account_url
-  azure_doc_intelligence_endpoint = module.docintel.docintel_endpoint
-  cosmos_endpoint                 = module.cosmos.cosmos_endpoint
-  acr_login_server                = module.registry.acr_login_server
-  acr_username                    = "stageb5t3acr"
-  acr_password_secret_name        = "acr-password"
+2. There is a "backend_base_url" variable already added, defaulting to 
+   "https://primaryddev-backend.gentlepond-2a87df60.eastus.azurecontainerapps.io". 
+   Find where this variable is used in main.tf (likely as a frontend env var, something 
+   like BACKEND_BASE_URL). Do NOT change the variable or its default — instead, show me 
+   the exact main.tf line(s) where var.backend_base_url is used, and tell me: does the 
+   backend container app in this same module expose an output or resource attribute 
+   (like azurerm_container_app.backend.latest_revision_fqdn) that could self-reference 
+   the backend's own URL instead of relying on an external variable? 
 
-Do NOT add neo4j_uri, neo4j_user, azure_foundry_project_endpoint, foundry_inference_endpoint, 
-or backend_base_url — these should intentionally fall back to the module's existing defaults 
-for now (stage shares dev's Neo4j and Foundry endpoints as a documented decision).
-
-Verify the module.storage, module.docintel, module.cosmos, and module.registry references 
-above use output names that actually exist in those modules' outputs.tf files — check each 
-one before assuming the name is correct, and tell me if any of these output names don't match.
-
-Do NOT modify any other file. Do NOT touch infra/envs/dev/main.tf.
+Do not make any changes. Just report back what you find so I can decide how to fix the 
+self-referential backend URL problem.
