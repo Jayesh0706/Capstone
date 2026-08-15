@@ -1,38 +1,15 @@
-Edit infra/modules/container_apps/main.tf and infra/modules/registry/main.tf 
-to match what is currently live in Azure:
+Edit infra/modules/container_apps/main.tf. In BOTH the backend and 
+frontend azurerm_container_app resources, add a secret block that 
+supplies the ACR registry password. The secret name must exactly match 
+what the registry block's password_secret_name references, which is:
+"primaryddevacrazurecrio-primaryddevacr"
 
-REGISTRY module:
-- admin_enabled = true (not false)
+Add to both apps:
 
-CONTAINER APPS module - BACKEND:
-- image: use variable defaulting to "primaryddevacr.azurecr.io/backend:411"
-- ingress target_port = 8000
-- min_replicas = 1, max_replicas = 10
-- add a registry block: server = "primaryddevacr.azurecr.io", 
-  username = "primaryddevacr", password_secret_name = 
-  "primaryddevacrazurecrio-primaryddevacr"
-- add http_scale_rule: name = "http-scaler", concurrent_requests = 10
-- KEEP all the env blocks and secret blocks that are being added
+secret {
+  name                = "primaryddevacrazurecrio-primaryddevacr"
+  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/acr-password"
+  identity            = "System"
+}
 
-CONTAINER APPS module - FRONTEND:
-- image: variable defaulting to "primaryddevacr.azurecr.io/webapp:411"
-- ingress target_port = 5000
-- min_replicas = 1, max_replicas = 10
-- same registry block
-- add http_scale_rule: name = "http-scaler", concurrent_requests = 10
-- add these env blocks (currently live, must not be removed):
-  MAX_UPLOAD_MB = "32"
-  MAX_CHART_TEXT_CHARS = "100000"
-  WEBAPP_SECRET_KEY -> secret_name "webapp-secret"
-  BACKEND_BASE_URL = "https://primaryddev-backend.gentlepond-2a87df60.eastus.azurecontainerapps.io"
-  BACKEND_API_KEY -> secret_name "backend-api-key"
-  FLASK_ENV = "production"
-- add secret blocks for webapp-secret and backend-api-key
-
-Also add to BOTH container apps:
-  lifecycle {
-    ignore_changes = [template[0].container[0].image]
-  }
-so the pipeline can manage images without Terraform reverting them.
-
-Show me both files.
+Keep all existing secret and env blocks. Show me the file.
