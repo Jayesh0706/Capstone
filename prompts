@@ -1,2 +1,61 @@
+Edit infra/modules/container_apps/main.tf. In the BACKEND 
+azurerm_container_app resource ONLY (do not touch frontend), add:
 
-terraform import "azurerm_key_vault_access_policy.tl" "/subscriptions/c84b9ad1-e3bd-486e-ac95-d9288b9ff535/resourceGroups/GENAI-B5-Project-T3-RG/providers/Microsoft.KeyVault/vaults/primaryddevkv/objectId/55ce4415-3ee4-4149-adae-8bfb35a988a4"
+A) Secret blocks at the resource level:
+
+secret {
+  name                = "neo4j-password"
+  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/neo4j-password"
+  identity            = "System"
+}
+secret {
+  name                = "cosmos-key"
+  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/cosmos-key"
+  identity            = "System"
+}
+secret {
+  name                = "cosmos-connection"
+  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/cosmos-connection"
+  identity            = "System"
+}
+secret {
+  name                = "backend-api-key"
+  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/backend-api-key"
+  identity            = "System"
+}
+
+B) Inside the backend's container block, add env blocks.
+
+Secret-backed (secret_name):
+env { name = "NEO4J_PASSWORD"           secret_name = "neo4j-password" }
+env { name = "COSMOS_KEY"               secret_name = "cosmos-key" }
+env { name = "COSMOS_CONNECTION_STRING" secret_name = "cosmos-connection" }
+env { name = "BACKEND_API_KEY"          secret_name = "backend-api-key" }
+
+Plain values (value):
+env { name = "AZURE_KEY_VAULT_URI"             value = "https://primaryddevkv.vault.azure.net/" }
+env { name = "AZURE_STORAGE_ACCOUNT_URL"       value = "https://genaib5t3cases.blob.core.windows.net/" }
+env { name = "AZURE_BLOB_CONTAINER"            value = "charts" }
+env { name = "AZURE_JOBS_PREFIX"               value = "jobs" }
+env { name = "AZURE_CHARTS_PREFIX"             value = "charts" }
+env { name = "AZURE_DOC_INTELLIGENCE_ENDPOINT" value = "https://primaryddev-docintel-1e963.cognitiveservices.azure.com/" }
+env { name = "NEO4J_URI"                       value = "neo4j+ssc://be5ccf2a.databases.neo4j.io" }
+env { name = "NEO4J_USER"                      value = "be5ccf2a" }
+env { name = "AZURE_FOUNDRY_PROJECT_ENDPOINT"  value = "https://foundry-ms-resource.services.ai.azure.com/api/projects/primary-diagnosis" }
+env { name = "FOUNDRY_AGENT_STRUCTURING_ID"    value = "vlm-agent" }
+env { name = "FOUNDRY_AGENT_REASONING_ID"      value = "reasoning-agent" }
+env { name = "FOUNDRY_AGENT_REVALIDATION_ID"   value = "revalidation-agent" }
+env { name = "FOUNDRY_INFERENCE_ENDPOINT"      value = "https://foundry-ms-resource.openai.azure.com" }
+env { name = "FOUNDRY_EMBEDDING_DEPLOYMENT"    value = "text-embedding-3-large" }
+env { name = "FOUNDRY_EMBEDDING_DIMENSIONS"    value = "3072" }
+env { name = "COSMOS_ENDPOINT"                 value = "https://primaryddev-cosmos.documents.azure.com:443/" }
+env { name = "COSMOS_DATABASE"                 value = "icd10_kb" }
+env { name = "COSMOS_GUIDELINES_CONTAINER"     value = "guideline_chunks" }
+env { name = "REQUIRE_API_KEY"                 value = "true" }
+env { name = "CORS_ORIGINS"                    value = "*" }
+env { name = "MAX_UPLOAD_MB"                   value = "32" }
+env { name = "MAX_REASONING_ATTEMPTS"          value = "2" }
+
+Write each env block with name and value/secret_name on separate lines 
+using proper HCL syntax. Do not modify the frontend container app.
+Show me the full updated main.tf.
