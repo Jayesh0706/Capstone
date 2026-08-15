@@ -1,4 +1,1 @@
-az keyvault show --name primaryddevkv --query "properties.accessPolicies[].objectId" -o tsv
-
-
-az containerapp revision list --name primaryddev-frontend --resource-group GENAI-B5-Project-T3-RG --query "[].{name:name, active:properties.active, health:properties.healthState}" -o table
+az role assignment list --assignee jayesh.nalawade@citiustech.com --scope "/subscriptions/c84b9ad1-e3bd-486e-ac95-d9288b9ff535/resourceGroups/GENAI-B5-Project-T3-RG" -o table
