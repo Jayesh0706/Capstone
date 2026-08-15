@@ -1,1 +1,24 @@
-az role assignment list --assignee jayesh.nalawade@citiustech.com --scope "/subscriptions/c84b9ad1-e3bd-486e-ac95-d9288b9ff535/resourceGroups/GENAI-B5-Project-T3-RG" -o table
+In infra/modules/container_apps/main.tf, every "secret" block currently has a 
+key_vault_secret_id hardcoded to the domain "https://primaryddevkv.vault.azure.net/", 
+for example:
+
+  key_vault_secret_id = "https://primaryddevkv.vault.azure.net/secrets/neo4j-password"
+
+Replace every occurrence of the hardcoded domain "https://primaryddevkv.vault.azure.net/" 
+with "${var.key_vault_uri}" so the line above becomes:
+
+  key_vault_secret_id = "${var.key_vault_uri}secrets/neo4j-password"
+
+Do this for all secret blocks in the file (there are approximately 6). 
+
+Then, in infra/modules/container_apps/variables.tf, add this new variable declaration, 
+placed near the other variables (after the "location" variable):
+
+variable "key_vault_uri" {
+  type        = string
+  description = "URI of the Key Vault to pull secrets from (e.g. https://<name>.vault.azure.net/)."
+}
+
+Do NOT change anything else in either file — no other hardcoded values, no scaling 
+settings, no ACR or Cosmos or Doc Intelligence references. Only the key_vault_secret_id 
+lines and the new variable declaration.
