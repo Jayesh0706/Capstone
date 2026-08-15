@@ -1,1 +1,4 @@
-az containerapp show --name primaryddev-backend --resource-group GENAI-B5-Project-T3-RG --query "properties.template.containers[0].env" -o table
+az keyvault show --name primaryddevkv --query "properties.accessPolicies[].objectId" -o tsv
+
+
+az containerapp revision list --name primaryddev-frontend --resource-group GENAI-B5-Project-T3-RG --query "[].{name:name, active:properties.active, health:properties.healthState}" -o table
