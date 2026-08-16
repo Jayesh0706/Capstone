@@ -1,14 +1,44 @@
-Let's check what's actually happening — Azure Portal is faster than digging through Terraform here
-Bash
-This shows the actual revision status and often a clearer reason than Terraform's generic wrapper error.
-Bash
-This pulls the container's actual startup logs — this is likely where the real answer is (crash on boot, missing env var, port mismatch, etc.).
-Run both and send me the output — this will tell us exactly why the placeholder container failed to come up, rather than guessing further.
+No Docker needed — Azure has a way to do this entirely server-side. `az acr import` copies an image directly from one registry to another (including from a public registry into yours), without ever touching your local machine.
 
+## The fix — no Docker required
 
+```bash
+az acr import --name stageb5t3acr --source mcr.microsoft.com/azuredocs/containerapps-helloworld:latest --image backend:placeholder
+```
 
-az containerapp revision list --name stage-backend --resource-group GENAI-B5-Project-T3-RG -o table
+This tells Azure: "go fetch this public image and copy it directly into `stageb5t3acr`, server to server." Takes a few seconds, no local pull/push needed.
 
+**Verify it landed:**
+```bash
+az acr repository show --name stageb5t3acr --repository backend
+```
 
+## Then update `main.tf`
 
-az containerapp logs show --name stage-backend --resource-group GENAI-B5-Project-T3-RG --tail 50
+Open `main.tf`, find the `module "container_apps"` block, and change:
+```hcl
+backend_image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+frontend_image = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+```
+
+to:
+```hcl
+backend_image  = "stageb5t3acr.azurecr.io/backend:placeholder"
+frontend_image = "stageb5t3acr.azurecr.io/backend:placeholder"
+```
+
+(Reusing the same image/tag for both is fine — it's just a placeholder to prove the infra works; both will just run the generic hello-world container for now.)
+
+## Re-apply
+
+```bash
+terraform plan 2>&1 | grep -i "mcr.microsoft\|stageb5t3acr.azurecr"
+```
+Confirm the new image reference shows up correctly, then:
+```bash
+terraform apply -target=module.container_apps
+```
+
+**One thing to watch this time:** since a previous failed attempt already created (or partially created) `stage-backend`, this apply might need to **update** the existing container app rather than create fresh — that's fine and expected, Terraform will show `~` (update in place) instead of `+`. Just don't be alarmed if it's not a plain "create."
+
+Run the `az acr import` command first and confirm it succeeds before touching `main.tf`.
