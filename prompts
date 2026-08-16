@@ -1,28 +1,30 @@
-I have an Azure Container App named "stage-backend" (resource group 
-"GENAI-B5-Project-T3-RG") that is stuck. History:
+I want to write my own Dockerfile for the backend service, from scratch, 
+for a stage environment pipeline I'm building. Please:
 
-- It was created via Terraform with a public placeholder image 
-  (mcr.microsoft.com/azuredocs/containerapps-helloworld:latest)
-- Multiple terraform apply attempts to update it to a new image 
-  (stageb5t3acr.azurecr.io/backend:placeholder) have failed with 
-  either "Operation expired" after ~20 minutes, or 
-  "ContainerAppOperationInProgress" 409 conflicts
-- `az containerapp revision list` for this app currently returns 
-  completely empty - no revisions exist at all, despite the app 
-  resource itself existing
-- I do NOT have permission to delete Azure resources (company policy) 
-  - do not suggest az containerapp delete or terraform destroy for 
-  this resource under any circumstances
+1. First, read backend/requirements.txt (or package.json, whichever 
+   applies) and identify the actual runtime, dependencies, entrypoint 
+   file, and the port the app listens on.
 
-Please:
-1. Check `az containerapp show --name stage-backend --resource-group 
-   GENAI-B5-Project-T3-RG --query "properties.provisioningState"` and 
-   report the actual current state
-2. Check `az containerapp revision list --name stage-backend 
-   --resource-group GENAI-B5-Project-T3-RG -o table` and report if 
-   anything shows now
-3. Based on those two results, tell me what's actually happening and 
-   what non-destructive options exist to fix it (e.g. az containerapp 
-   update directly, waiting longer, or something else) - do not run 
-   any command that deletes, destroys, or replaces the resource without 
-   explaining what it does first and getting my explicit confirmation
+2. As a reference only (do not copy it verbatim), also read the existing 
+   backend/Dockerfile so I understand what pattern dev's setup already 
+   uses - but build mine based on the app's actual requirements, not by 
+   duplicating that file.
+
+3. Write a NEW file at backend/Dockerfile.stage (do not modify or delete 
+   the existing backend/Dockerfile). Use a multi-stage build if it's 
+   appropriate for this app (smaller final image, separate build/runtime 
+   stages). 
+
+4. As you write each instruction (FROM, WORKDIR, COPY, RUN, EXPOSE, CMD, 
+   etc.), explain in plain language why it's needed and what it does - 
+   I want to understand this file, not just have Copilot generate it 
+   silently.
+
+5. Do the same for the frontend service: read its actual requirements, 
+   reference (don't copy) its existing Dockerfile if one exists, and 
+   write a new file at frontend/Dockerfile.stage with the same 
+   instruction-by-instruction explanation.
+
+After both files are created, summarize: what base images did you choose 
+and why, what port does each app expose, and what would the exact 
+`docker build` command look like to build each one locally for testing.
