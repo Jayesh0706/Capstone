@@ -1,42 +1,40 @@
-Now this genuinely narrows things down. **`-replace` failed because Terraform says the resource *isn't in state at all*** — "already exists... needs to be imported into the State."
+This confirms the real problem precisely, and it's very informative:
 
-## What this actually reveals
-
-This is a completely different situation than I thought:
-- `stage-backend` **exists in Azure** (confirmed — it's real, with the old public image)
-- `stage-backend` is **NOT in Terraform's state** — so `-replace` can't target something Terraform doesn't know about
-- But earlier, `terraform plan` said **"No changes"** for the whole `container_apps` module
-
-**This only makes sense if `terraform plan` never actually evaluated `container_apps` at all** — likely because our `-target=module.container_apps` runs kept failing partway through (remember the "Operation expired" timeout), and the container app resource got created in Azure directly by that failed attempt, but Terraform's own bookkeeping never recorded it as "created" because the apply **errored out** before reaching that confirmation step.
-
-## Fix: import it into state first, then update
-
-```bash
-terraform import module.container_apps.azurerm_container_app.backend "/subscriptions/c84b9ad1-e3bd-486e-ac95-d9288b9ff535/resourceGroups/GENAI-B5-Project-T3-RG/providers/Microsoft.App/containerApps/stage-backend"
+```
+image (still): mcr.microsoft.com/azuredocs/containerapps-helloworld:latest
+revision list: completely empty (no table rows at all)
 ```
 
-**Verify it's now tracked:**
+**Even after the import, and even after multiple `apply` attempts, the image in Azure has never actually changed from the original public one, and there has never been a single successful revision — ever, this entire time.**
+
+## What this really means
+
+This isn't a slow provisioning issue or a stuck operation — it's that **every apply attempt fails silently or times out before the update actually takes effect**, and the container app is stuck in a state where Azure always reports "operation in progress" (blocking new attempts) but never actually completes or fails cleanly. This is a genuinely stuck resource on Azure's side.
+
+## Time to stop repeating attempts and reset cleanly
+
+At this point, repeatedly re-running `apply` against the same stuck resource isn't productive. The cleanest fix is to **delete the stuck container app directly in Azure**, then let Terraform recreate it fresh from a clean slate.
+
+**1. Remove it from Terraform state first (so Terraform doesn't try to manage a soon-to-be-deleted resource):**
 ```bash
-terraform state list | grep container_app
+terraform state rm module.container_apps.azurerm_container_app.backend
 ```
 
-**Now that it's in state, plan should show a real diff (old image → new image):**
+**2. Delete the actual stuck resource in Azure:**
 ```bash
-terraform plan -target=module.container_apps 2>&1 | grep -A3 "image"
+az containerapp delete --name stage-backend --resource-group GENAI-B5-Project-T3-RG --yes
 ```
 
-**Then apply normally (not `-replace` this time — plain update):**
+**3. Do the same for frontend if it's in the same state:**
+```bash
+az containerapp show --name stage-frontend --resource-group GENAI-B5-Project-T3-RG --query "properties.template.containers[0].image" -o tsv
+```
+
+(check first — if it also still shows the old image, repeat steps 1-2 for frontend too)
+
+**4. Fresh apply — this time it's a genuine `+` create, not an update fighting a stuck operation:**
 ```bash
 terraform apply -target=module.container_apps
 ```
 
-This should now show `~` (update in place) with the image changing from the public one to your placeholder — not create, not error.
-
-**Check if frontend has the same issue too, before importing it:**
-
-```bash
-az containerapp show --name stage-frontend --resource-group GENAI-B5-Project-T3-RG --query "id" -o tsv 2>&1
-```
-If this returns a real ID (not an error), frontend also exists and likely needs the same import treatment.
-
-Run the backend import command first and send the result.
+This breaks the cycle by giving Azure a completely clean resource to provision, rather than continuing to fight whatever got stuck in the first failed attempt. Run steps 1-2 for backend first and confirm the delete succeeds before we touch frontend or re-apply.
