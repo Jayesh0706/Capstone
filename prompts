@@ -1,4 +1,42 @@
-az containerapp show \
-  --name stage2-backend \
+That's a **great catch**—and it points to something specific about the `stage2-backend` container app itself, not a general auth/permissions issue.
+
+Here are the likely culprits:
+
+1. **The container app resource exists but is in a bad state** (Failed/InProgress that Azure won't recover from)
+   - Other resources (KV, storage, etc.) are fine
+   - But this specific app is corrupted/wedged
+
+2. **The Container App environment (`stage2-env`) has an issue**
+   - If the environment is unhealthy, creating apps within it fails
+   - But you can still query the environment itself
+
+3. **A quota or capacity limit on Container Apps specifically**
+   - Your subscription might have hit a limit for Container Apps (cores, replicas, etc.)
+   - But storage/KV/etc. are unaffected
+
+4. **The placeholder image (`mcr.microsoft.com/azuredocs/containerapps-helloworld:latest`) has a startup problem**
+   - It fails to start → revision creation times out → operation expires
+   - But the resource creation itself partially succeeds (hence why it exists in Azure)
+
+---
+
+**Let's diagnose which one:**
+
+First, check if `stage2-env` itself is healthy:
+
+```bash
+az containerapp env show \
+  --name stage2-env \
   --resource-group GENAI-BS-Project-TS-RG \
-  --query '{provisioningState: properties.provisioningState, status: properties.status, revisions: properties.revisionSettings}'
+  --query '{provisioningState: properties.provisioningState, status: properties.status}'
+```
+
+Then, if that's fine, check what revisions (if any) were created for `stage2-backend`:
+
+```bash
+az containerapp revision list \
+  --name stage2-backend \
+  --resource-group GENAI-BS-Project-TS-RG
+```
+
+Share both outputs. That'll tell us if it's the environment, the image startup, or the resource itself that's the problem.
