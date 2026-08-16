@@ -1,23 +1,63 @@
-Here's the full sequence, one after another. Run each, and paste me the output as you go (or all together at the end if that's easier).
+Good — let's be precise and double-check before touching anything.
+
+## Step 1: Confirm current state first
 
 ```bash
-grep "backend_image\|frontend_image" main.tf
+grep "backend_image\|frontend_image\|target_port" main.tf
 ```
+
+We already know from the last screenshot: images are wrong (public placeholder, not ACR), ports are `80`/`80` (which we now believe is correct for the placeholder image). Let's just re-confirm nothing else changed since then.
+
+## Step 2: The only edit needed — fix the two image lines
+
+Open `main.tf`, find these two lines inside `module "container_apps"`:
+```hcl
+backend_image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+frontend_image = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+```
+
+Change to:
+```hcl
+backend_image  = "stageb5t3acr.azurecr.io/backend:placeholder"
+frontend_image = "stageb5t3acr.azurecr.io/backend:placeholder"
+```
+
+**Leave `backend_target_port` and `frontend_target_port` exactly as they are (`80`)** — since that's the port the placeholder image (Microsoft's hello-world sample) actually listens on, and that's still the image being deployed.
+
+## Step 3: Verify the edit
 
 ```bash
-grep "backend_target_port\|frontend_target_port" main.tf
+grep "backend_image\|frontend_image\|target_port" main.tf
 ```
+
+Should now show:
+```
+backend_image  = "stageb5t3acr.azurecr.io/backend:placeholder"
+frontend_image = "stageb5t3acr.azurecr.io/backend:placeholder"
+backend_target_port  = 80
+frontend_target_port = 80
+```
+
+## Step 4: One more sanity check — confirm the image genuinely exists in your ACR
 
 ```bash
-grep -A2 "backend_target_port\|frontend_target_port" ../../modules/container_apps/variables.tf
+az acr repository show --name stageb5t3acr --repository backend --query "name" -o tsv
 ```
+
+Should return `backend` with no error. If this errors, the earlier `az acr import` didn't actually land, and we'd need to redo it before applying.
+
+## Step 5: Plan — final check before touching Azure
 
 ```bash
-grep "acr_login_server\|acr_username\|acr_password_secret_name" main.tf
+terraform plan -target=module.container_apps
 ```
+
+Review carefully: should show `+` create for `stage2-env`, `stage2-backend`, `stage2-frontend`, images pointing to `stageb5t3acr.azurecr.io/backend:placeholder`, ports `80`.
+
+## Step 6: Apply
 
 ```bash
-grep -A2 'module "container_apps"' main.tf
+terraform apply -target=module.container_apps
 ```
 
-Send me the results of all five — that gives me the complete picture (images, ports, registry, and the name_prefix change you made) in one go, and I'll tell you exactly what (if anything) still needs fixing before we run `terraform plan`.
+Do Steps 2–4 yourself, send me the Step 4 confirmation, and let's look at the Step 5 plan output together before you type `yes` on Step 6.
