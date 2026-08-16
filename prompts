@@ -1,30 +1,23 @@
-I want to write my own Dockerfile for the backend service, from scratch, 
-for a stage environment pipeline I'm building. Please:
+Here's the full sequence, one after another. Run each, and paste me the output as you go (or all together at the end if that's easier).
 
-1. First, read backend/requirements.txt (or package.json, whichever 
-   applies) and identify the actual runtime, dependencies, entrypoint 
-   file, and the port the app listens on.
+```bash
+grep "backend_image\|frontend_image" main.tf
+```
 
-2. As a reference only (do not copy it verbatim), also read the existing 
-   backend/Dockerfile so I understand what pattern dev's setup already 
-   uses - but build mine based on the app's actual requirements, not by 
-   duplicating that file.
+```bash
+grep "backend_target_port\|frontend_target_port" main.tf
+```
 
-3. Write a NEW file at backend/Dockerfile.stage (do not modify or delete 
-   the existing backend/Dockerfile). Use a multi-stage build if it's 
-   appropriate for this app (smaller final image, separate build/runtime 
-   stages). 
+```bash
+grep -A2 "backend_target_port\|frontend_target_port" ../../modules/container_apps/variables.tf
+```
 
-4. As you write each instruction (FROM, WORKDIR, COPY, RUN, EXPOSE, CMD, 
-   etc.), explain in plain language why it's needed and what it does - 
-   I want to understand this file, not just have Copilot generate it 
-   silently.
+```bash
+grep "acr_login_server\|acr_username\|acr_password_secret_name" main.tf
+```
 
-5. Do the same for the frontend service: read its actual requirements, 
-   reference (don't copy) its existing Dockerfile if one exists, and 
-   write a new file at frontend/Dockerfile.stage with the same 
-   instruction-by-instruction explanation.
+```bash
+grep -A2 'module "container_apps"' main.tf
+```
 
-After both files are created, summarize: what base images did you choose 
-and why, what port does each app expose, and what would the exact 
-`docker build` command look like to build each one locally for testing.
+Send me the results of all five — that gives me the complete picture (images, ports, registry, and the name_prefix change you made) in one go, and I'll tell you exactly what (if anything) still needs fixing before we run `terraform plan`.
