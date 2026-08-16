@@ -1,44 +1,42 @@
-No Docker needed — Azure has a way to do this entirely server-side. `az acr import` copies an image directly from one registry to another (including from a public registry into yours), without ever touching your local machine.
+Now this genuinely narrows things down. **`-replace` failed because Terraform says the resource *isn't in state at all*** — "already exists... needs to be imported into the State."
 
-## The fix — no Docker required
+## What this actually reveals
 
-```bash
-az acr import --name stageb5t3acr --source mcr.microsoft.com/azuredocs/containerapps-helloworld:latest --image backend:placeholder
-```
+This is a completely different situation than I thought:
+- `stage-backend` **exists in Azure** (confirmed — it's real, with the old public image)
+- `stage-backend` is **NOT in Terraform's state** — so `-replace` can't target something Terraform doesn't know about
+- But earlier, `terraform plan` said **"No changes"** for the whole `container_apps` module
 
-This tells Azure: "go fetch this public image and copy it directly into `stageb5t3acr`, server to server." Takes a few seconds, no local pull/push needed.
+**This only makes sense if `terraform plan` never actually evaluated `container_apps` at all** — likely because our `-target=module.container_apps` runs kept failing partway through (remember the "Operation expired" timeout), and the container app resource got created in Azure directly by that failed attempt, but Terraform's own bookkeeping never recorded it as "created" because the apply **errored out** before reaching that confirmation step.
 
-**Verify it landed:**
-```bash
-az acr repository show --name stageb5t3acr --repository backend
-```
-
-## Then update `main.tf`
-
-Open `main.tf`, find the `module "container_apps"` block, and change:
-```hcl
-backend_image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
-frontend_image = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
-```
-
-to:
-```hcl
-backend_image  = "stageb5t3acr.azurecr.io/backend:placeholder"
-frontend_image = "stageb5t3acr.azurecr.io/backend:placeholder"
-```
-
-(Reusing the same image/tag for both is fine — it's just a placeholder to prove the infra works; both will just run the generic hello-world container for now.)
-
-## Re-apply
+## Fix: import it into state first, then update
 
 ```bash
-terraform plan 2>&1 | grep -i "mcr.microsoft\|stageb5t3acr.azurecr"
+terraform import module.container_apps.azurerm_container_app.backend "/subscriptions/c84b9ad1-e3bd-486e-ac95-d9288b9ff535/resourceGroups/GENAI-B5-Project-T3-RG/providers/Microsoft.App/containerApps/stage-backend"
 ```
-Confirm the new image reference shows up correctly, then:
+
+**Verify it's now tracked:**
+```bash
+terraform state list | grep container_app
+```
+
+**Now that it's in state, plan should show a real diff (old image → new image):**
+```bash
+terraform plan -target=module.container_apps 2>&1 | grep -A3 "image"
+```
+
+**Then apply normally (not `-replace` this time — plain update):**
 ```bash
 terraform apply -target=module.container_apps
 ```
 
-**One thing to watch this time:** since a previous failed attempt already created (or partially created) `stage-backend`, this apply might need to **update** the existing container app rather than create fresh — that's fine and expected, Terraform will show `~` (update in place) instead of `+`. Just don't be alarmed if it's not a plain "create."
+This should now show `~` (update in place) with the image changing from the public one to your placeholder — not create, not error.
 
-Run the `az acr import` command first and confirm it succeeds before touching `main.tf`.
+**Check if frontend has the same issue too, before importing it:**
+
+```bash
+az containerapp show --name stage-frontend --resource-group GENAI-B5-Project-T3-RG --query "id" -o tsv 2>&1
+```
+If this returns a real ID (not an error), frontend also exists and likely needs the same import treatment.
+
+Run the backend import command first and send the result.
