@@ -4,3 +4,11 @@ This shows the actual revision status and often a clearer reason than Terraform'
 Bash
 This pulls the container's actual startup logs — this is likely where the real answer is (crash on boot, missing env var, port mismatch, etc.).
 Run both and send me the output — this will tell us exactly why the placeholder container failed to come up, rather than guessing further.
+
+
+
+az containerapp revision list --name stage-backend --resource-group GENAI-B5-Project-T3-RG -o table
+
+
+
+az containerapp logs show --name stage-backend --resource-group GENAI-B5-Project-T3-RG --tail 50
