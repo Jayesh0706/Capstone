@@ -1,40 +1,28 @@
-This confirms the real problem precisely, and it's very informative:
+I have an Azure Container App named "stage-backend" (resource group 
+"GENAI-B5-Project-T3-RG") that is stuck. History:
 
-```
-image (still): mcr.microsoft.com/azuredocs/containerapps-helloworld:latest
-revision list: completely empty (no table rows at all)
-```
+- It was created via Terraform with a public placeholder image 
+  (mcr.microsoft.com/azuredocs/containerapps-helloworld:latest)
+- Multiple terraform apply attempts to update it to a new image 
+  (stageb5t3acr.azurecr.io/backend:placeholder) have failed with 
+  either "Operation expired" after ~20 minutes, or 
+  "ContainerAppOperationInProgress" 409 conflicts
+- `az containerapp revision list` for this app currently returns 
+  completely empty - no revisions exist at all, despite the app 
+  resource itself existing
+- I do NOT have permission to delete Azure resources (company policy) 
+  - do not suggest az containerapp delete or terraform destroy for 
+  this resource under any circumstances
 
-**Even after the import, and even after multiple `apply` attempts, the image in Azure has never actually changed from the original public one, and there has never been a single successful revision — ever, this entire time.**
-
-## What this really means
-
-This isn't a slow provisioning issue or a stuck operation — it's that **every apply attempt fails silently or times out before the update actually takes effect**, and the container app is stuck in a state where Azure always reports "operation in progress" (blocking new attempts) but never actually completes or fails cleanly. This is a genuinely stuck resource on Azure's side.
-
-## Time to stop repeating attempts and reset cleanly
-
-At this point, repeatedly re-running `apply` against the same stuck resource isn't productive. The cleanest fix is to **delete the stuck container app directly in Azure**, then let Terraform recreate it fresh from a clean slate.
-
-**1. Remove it from Terraform state first (so Terraform doesn't try to manage a soon-to-be-deleted resource):**
-```bash
-terraform state rm module.container_apps.azurerm_container_app.backend
-```
-
-**2. Delete the actual stuck resource in Azure:**
-```bash
-az containerapp delete --name stage-backend --resource-group GENAI-B5-Project-T3-RG --yes
-```
-
-**3. Do the same for frontend if it's in the same state:**
-```bash
-az containerapp show --name stage-frontend --resource-group GENAI-B5-Project-T3-RG --query "properties.template.containers[0].image" -o tsv
-```
-
-(check first — if it also still shows the old image, repeat steps 1-2 for frontend too)
-
-**4. Fresh apply — this time it's a genuine `+` create, not an update fighting a stuck operation:**
-```bash
-terraform apply -target=module.container_apps
-```
-
-This breaks the cycle by giving Azure a completely clean resource to provision, rather than continuing to fight whatever got stuck in the first failed attempt. Run steps 1-2 for backend first and confirm the delete succeeds before we touch frontend or re-apply.
+Please:
+1. Check `az containerapp show --name stage-backend --resource-group 
+   GENAI-B5-Project-T3-RG --query "properties.provisioningState"` and 
+   report the actual current state
+2. Check `az containerapp revision list --name stage-backend 
+   --resource-group GENAI-B5-Project-T3-RG -o table` and report if 
+   anything shows now
+3. Based on those two results, tell me what's actually happening and 
+   what non-destructive options exist to fix it (e.g. az containerapp 
+   update directly, waiting longer, or something else) - do not run 
+   any command that deletes, destroys, or replaces the resource without 
+   explaining what it does first and getting my explicit confirmation
