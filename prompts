@@ -1,60 +1,6 @@
-Good — that's real progress. Let's verify what actually landed before moving forward, same discipline as before.
-
-terraform apply -target=azurerm_key_vault_access_policy.admin -target=azurerm_key_vault_access_policy.developer -target=azurerm_key_vault_access_policy.tl
-
-
-## Step 1: Confirm state now has everything
-
-```bash
-terraform state list
-```
-
-Should now show all 10 original resources **plus** `module.keyvault.azurerm_key_vault.key_vault` and `module.registry.azurerm_container_registry.registry` — 12 total.
-
-## Step 2: Confirm the resource group in Azure matches
-
-```bash
-az resource list --resource-group GENAI-B5-Project-T3-RG --query "[?starts_with(name, 'stage')].{name:name, type:type}" -o table
-```
-
-Note the **exact final names** Azure assigned for Key Vault and Registry (should be `stageb5t3kv` and `stageb5t3acr`, based on your prefix).
-
-## Step 3: Now create the two secrets that depend on these
-
-**ACR password:**
-```bash
-az acr credential show --name stageb5t3acr --query "passwords[0].value" -o tsv
-```
-
-Copy the output, then:
-```bash
-az keyvault secret set --vault-name stageb5t3kv --name acr-password-stage --value "PASTE_PASSWORD_HERE"
-```
-
-**Cosmos key + connection string** (cosmos was already created earlier):
-```bash
-az cosmosdb keys list --name stage-cosmos --resource-group GENAI-B5-Project-T3-RG --type keys --query "primaryMasterKey" -o tsv
-```
-```bash
-az keyvault secret set --vault-name stageb5t3kv --name cosmos-key --value "PASTE_KEY_HERE"
-```
-```bash
-az cosmosdb keys list --name stage-cosmos --resource-group GENAI-B5-Project-T3-RG --type connection-strings --query "connectionStrings[0].connectionString" -o tsv
-```
-```bash
-az keyvault secret set --vault-name stageb5t3kv --name cosmos-connection --value "PASTE_CONNECTION_STRING_HERE"
-```
-
-**Neo4j (shared with dev) + backend API key (new):**
-
-```bash
-az keyvault secret set --vault-name stageb5t3kv --name neo4j-password --value "SAME_AS_DEV_VALUE"
-az keyvault secret set --vault-name stageb5t3kv --name backend-api-key --value "$(openssl rand -hex 32)"
-```
-
-## Step 4: Verify all 5 secrets exist
-```bash
-az keyvault secret list --vault-name stageb5t3kv --query "[].name" -o table
-```
-
-Run Steps 1 and 2 first and send me the output — I want to confirm the exact real names before we start fetching credentials for them.
+Let's check what's actually happening — Azure Portal is faster than digging through Terraform here
+Bash
+This shows the actual revision status and often a clearer reason than Terraform's generic wrapper error.
+Bash
+This pulls the container's actual startup logs — this is likely where the real answer is (crash on boot, missing env var, port mismatch, etc.).
+Run both and send me the output — this will tell us exactly why the placeholder container failed to come up, rather than guessing further.
