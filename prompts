@@ -1,22 +1,2 @@
-In infra/modules/container_apps/main.tf, at line 270, the frontend container app has 
-an env block:
-
-  BACKEND_BASE_URL = var.backend_base_url
-
-Replace this with a self-reference to the backend container app created in this same 
-module, so it no longer depends on an external variable:
-
-  BACKEND_BASE_URL = "https://${azurerm_container_app.backend.ingress[0].fqdn}"
-
-Then, in variables.tf, remove the "backend_base_url" variable declaration entirely, 
-since it is no longer used anywhere.
-
-After making this change, confirm no other references to var.backend_base_url remain 
-anywhere in the module.
-
-
-
-
-grep -n "backend_base_url" infra/modules/container_apps/*.tf
-
-grep -n "ingress\[0\].fqdn" infra/modules/container_apps/main.tf
+backend_image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+frontend_image = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
