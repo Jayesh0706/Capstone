@@ -1,5 +1,8 @@
 Good — that's real progress. Let's verify what actually landed before moving forward, same discipline as before.
 
+terraform apply -target=azurerm_key_vault_access_policy.admin -target=azurerm_key_vault_access_policy.developer -target=azurerm_key_vault_access_policy.tl
+
+
 ## Step 1: Confirm state now has everything
 
 ```bash
