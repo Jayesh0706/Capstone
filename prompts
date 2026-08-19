@@ -1,10 +1,35 @@
-Good — this is about **communicating the security work clearly**, not just doing more of it. Let me give you the complete plan: what to actually implement (quick wins), what to document (the honest tradeoffs), and how to present it so the team/graders see deliberate security thinking.
+**Terraform, for all of it** — not raw `az` commands. Let me explain why, since this connects to lessons you've already learned the hard way this project.
 
----
+## The reasoning
 
-## Part A — The quick wins to actually implement (do these first)
+Every time you've applied something via CLI instead of Terraform, it created drift, and every drift incident this project has cost you real time (the TL's manual portal change, the image-tag mismatch, the frontend env vars set in the portal). You know this pattern now — **CLI changes are invisible to Terraform until someone syncs the code**, and that gap is where problems hide.
 
-### A1. Tighten CORS
+For genuine one-time bootstrapping problems (the remote-state chicken-and-egg, the frontend Key Vault access deadlock), CLI was the right call because Terraform literally couldn't do it yet. **None of today's security changes have that excuse** — CORS, ingress, and Cosmos network rules are all things Terraform can express directly and cleanly.
+
+## What each change looks like in Terraform
+
+**CORS** — already a plain `env` block value; just edit the string in `main.tf` (as I gave you earlier).
+
+**Backend internal-only ingress** — the `external_enabled` attribute inside the `ingress` block of the `azurerm_container_app` resource. Also natively supported.
+
+**Cosmos network restriction** — the `azurerm_cosmosdb_account` resource supports `is_virtual_network_filter_enabled`, `network_acl_bypass_for_azure_services`, and `ip_range_filter` as first-class arguments. No need for a separate `az cosmosdb update` command.
+
+## The one exception — verification only
+
+The **only** CLI commands you should run are read-only ones, to *check* things before or after a Terraform change:
+```
+az containerapp show --name primaryddev-frontend ... --query "..." -o tsv
+```
+
+(to get the exact frontend FQDN for CORS)
+```
+az containerapp show --name primaryddev-backend ... --query "properties.configuration.ingress" -o json
+```
+(to verify ingress changed after apply)
+
+These **read** Azure's state to inform or confirm — they never **change** anything. That distinction (read vs. write) is the line: reads are always safe outside Terraform, writes should always go through Terraform for anything that isn't a one-time bootstrap problem.
+
+## The complete Terraform-only sequence
 
 ```
 git checkout dev
@@ -12,81 +37,63 @@ git pull origin dev
 git checkout -b feature/security-hardening
 ```
 
+**Get the exact frontend URL first (read-only, informs the edit):**
 ```
-Edit infra/modules/container_apps/main.tf. In the BACKEND container's 
-env blocks, change CORS_ORIGINS from "*" to the frontend's URL: 
-"https://primaryddev-frontend.gentlepond-2a87df60.eastus.azurecontainerapps.io"
-Show me the updated env block.
+az containerapp show --name primaryddev-frontend --resource-group GENAI-B5-Project-T3-RG --query "properties.configuration.ingress.fqdn" -o tsv
 ```
 
-### A2. Restrict Cosmos DB firewall (if feasible)
-
-Check current outbound IPs of your Container Apps environment:
+**One combined prompt for all three changes:**
 ```
-az containerapp env show --name primaryddev-env --resource-group GENAI-B5-Project-T3-RG --query "properties.staticIp" -o tsv
+Make three changes in infra/modules/container_apps/main.tf and 
+infra/modules/cosmos/main.tf:
+
+1. In the BACKEND azurerm_container_app's env blocks, change 
+   CORS_ORIGINS value from "*" to 
+   "https://<exact-frontend-fqdn-from-az-command>"
+
+2. In the BACKEND azurerm_container_app's ingress block, change 
+   external_enabled from true to false.
+
+3. In infra/modules/cosmos/main.tf, on the azurerm_cosmosdb_account 
+   resource, add network_acl_bypass_for_azure_services = true (or the 
+   correct current attribute name for allowing Azure-service access - 
+   verify against current azurerm provider docs).
+
+Also add an output backend_internal_fqdn to 
+infra/modules/container_apps/outputs.tf pointing at 
+azurerm_container_app.backend.ingress[0].fqdn.
+
+Then update the FRONTEND container's BACKEND_BASE_URL env value to 
+reference that internal fqdn output instead of the hardcoded public URL.
+
+Show me all changed files.
 ```
 
-If Container Apps doesn't give a stable static IP easily, the simpler Azure-native option is enabling **"Allow access from Azure services"** on Cosmos, which restricts access to Azure's own network rather than the open internet:
-```
-az cosmosdb update --name primaryddev-cosmos --resource-group GENAI-B5-Project-T3-RG --enable-virtual-network true --networkAclBypass AzureServices
-```
-Or handle this the same way via Terraform (add `public_network_access_enabled` + `network_acl_bypass_for_azure_services` to the Cosmos module) — tell me if you want that as a Terraform prompt instead of a CLI command, since we prefer code-based changes.
-
-### A3. Backend internal-only ingress (the bigger one, from our last exchange)
-
-Confirm with developer first (does anything besides frontend need direct backend access?), then follow the 9 steps from my previous message (ingress → internal, output the internal FQDN, wire frontend's `BACKEND_BASE_URL` to it, plan, apply, verify old URL is unreachable, verify frontend still works).
-
-### A4. Plan, apply, verify, commit
-
+**Then the careful plan/apply cycle:**
 ```
 cd infra\envs\dev
 terraform plan
 ```
-Review carefully. Then:
+Read it fully — confirm backend ingress flips, frontend's `BACKEND_BASE_URL` updates, Cosmos gets the network setting, nothing destroyed.
 ```
 terraform apply
 ```
-Verify: old backend public URL fails, frontend still works end-to-end, Cosmos still reachable from backend.
 
+**Then verify (read-only CLI, checking the result):**
+```
+az containerapp show --name primaryddev-backend --resource-group GENAI-B5-Project-T3-RG --query "properties.configuration.ingress.external" -o tsv
+```
+Should now show `false`.
+
+Open the frontend URL in a browser, confirm the app still works end-to-end.
+
+**Then commit:**
 ```
 cd ../../..
 git add infra/
 git commit -m "Security hardening: restrict CORS, backend internal-only ingress, Cosmos network restriction"
 git push -u origin feature/security-hardening
 ```
-→ PR to dev.
+→ PR to dev, with the security-notes doc included.
 
----
-
-## Part B — Document what you did AND what you deliberately deferred
-
-This is the part that actually shows "we worked on security" to anyone reviewing later — implementation alone doesn't communicate reasoning; the write-up does.
-
-Here's the complete plan — implementation steps plus a document that shows the reasoning.
-
-## Part A — Implement (steps above): CORS tightening, Cosmos network restriction, backend internal-only ingress, then plan/apply/verify/commit/PR.
-
-## Part B — `security-notes-2026-08-18.md`
-
-This is the piece that actually **communicates** the work — implementation alone is invisible to a reviewer unless it's written down. The doc has two halves:
-
-**"Implemented"** — six concrete things, each with a one-line "why," including the CORS/ingress/Cosmos changes you're about to make.
-
-**"Deliberately deferred"** — this is the important half. It covers VNet/private endpoints, Neo4j Aura's network limits, the no-RBAC key-based-auth constraint, shared API key vs. per-user auth, and no WAF — **each with a stated reason**, not just "not done." This is what separates "we ran out of time" from "we evaluated this and made a deliberate call given our constraints."
-
-That framing — implemented + reasoned deferrals — is exactly what reads as mature security thinking to a grader or teammate, rather than either overclaiming ("fully secure!") or looking incomplete.
-
-## How to actually "let them know"
-
-1. **Fill in the two `[bracketed]` placeholders** in the doc once you've confirmed the Cosmos restriction you actually applied and whether Neo4j Aura supports IP restriction
-2. **Commit it** alongside the code changes in the same PR — `infra/docs/security-notes-2026-08-18.md`
-3. **Reference it in the PR description**: "Security hardening pass — see `security-notes-2026-08-18.md` for what changed and what's deliberately deferred with reasoning"
-4. **Send the team a short message** pointing at it:
-   ```
-   Did a security pass on infra: CORS locked down, backend no longer 
-   publicly reachable (frontend-only now), Cosmos network restricted. 
-   Full writeup + what we're deliberately deferring (and why) in 
-   security-notes-2026-08-18.md — worth a read before demo.
-   ```
-
-Run Part A's steps, fill in the two placeholders based on what actually happens, then commit both the code and the doc together.
+So: Terraform for every actual change, CLI only to read/verify. Run the frontend-FQDN lookup first and tell me what it returns — then we finalize the exact CORS value before running the combined prompt.
