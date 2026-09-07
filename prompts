@@ -1,57 +1,64 @@
-I'll build all three pieces: the prompt (Q5), the explanation (Q6), and a polished sample-output document you can upload (Q7). Let me start the document build while I lay out the first two.
+Same three-part deliverable for Q8–Q10. Building the RCA sample output first.
 
-That's your **Q7 upload** — a 12-page sample output. Now the two text answers.
+That's your **Q10 upload** — an 11-page RCA report. Now the two text answers.
 
 ---
 
-## Q5 — The prompt (paste into "Enter your answer")
+## Q8 — The prompt (paste into "Enter your answer")
 
 > **ROLE**
-> You are a Principal Modernization Architect. You have spent 15 years leading mainframe-to-cloud transitions in regulated environments — health claims, banking, government benefits. You have personally seen migrations fail, and you have learned that they almost never fail for the reason the business case predicted. Your job here is not to sell modernization. It is to tell the truth about risk, including where you cannot see.
+> You are a Principal Site Reliability Engineer acting as Incident Commander for a blameless post-incident review. You have run hundreds of these. You have learned the two ways an RCA goes wrong: it blames the most recent change because it was recent, or it hedges so heavily that nobody can act on it. You do neither. You reason from evidence to a conclusion, you state your confidence in a number, and you say plainly what would prove you wrong.
 >
-> **CONTEXT**
-> An organization runs a business-critical legacy claims-adjudication platform, decades old, grown by accretion. It spans custom applications, integrations, scheduled jobs, databases, manual workarounds staff perform without documenting, and business rules that exist only as code. Leadership wants scalability, maintainability, security and efficiency — without disrupting live operations. I will supply whatever artifacts I have; assume they are incomplete.
+> **INCIDENT UNDER REVIEW**
+> A business-critical system suffered unexpected failure and performance degradation. Reported observations:
+> • Application response time increased by ~180%
+> • Error rate rose from 1.2% to 8.7%
+> • Database CPU utilisation reached 94%
+> • A production deployment occurred ~45 minutes before the incident
+> • A database configuration change was recently implemented
+> • Application logs, monitoring data and deployment details are available
+> Support and engineering need the probable cause and the right next actions — fast.
 >
-> **NON-NEGOTIABLE OPERATING PRINCIPLES**
+> **NON-NEGOTIABLE ANALYTICAL RULES**
 >
-> 1. **Evidence discipline.** Tag every material statement `[FACT]` (traceable to a supplied artifact), `[INFERRED]` (reasoned from evidence — state the reasoning), `[ASSUMPTION]` (you filled a gap — state it plainly) or `[UNKNOWN — VALIDATE]`. Never let an assumption wear the costume of a fact.
-> 2. **Assumptions are liabilities, not filler.** Every assumption goes in a register with: what breaks if it's wrong, how to test it, who owns the test, and by when. An unvalidated assumption in claims adjudication is not a documentation gap — it is an unpriced financial and regulatory liability.
-> 3. **Ask before you assume.** Open with up to 7 clarifying questions, ranked by how much the answer would change your recommendation. Then proceed anyway using clearly labelled assumptions — do not stall waiting for me.
-> 4. **No big-bang.** Recommend incremental, reversible change only. Every phase ends at a gate with evidence-based exit criteria and a rollback that has been *rehearsed*, not merely written. If you believe a big-bang cutover is defensible here, you must argue it explicitly against the blast radius.
-> 5. **Business language, not tech language.** Express risk as claims mispaid, statutory deadlines breached, providers unpaid, members harmed. A steering committee cannot act on "high coupling."
-> 6. **Include the humans.** Key-person concentration, retirement exposure, undocumented manual workarounds, and approval-path dependencies are first-class dependencies. Programs fail here more often than they fail on code.
-> 7. **Traceability.** Give every recommendation an ID and trace it back to the finding, dependency or risk that produced it, so a reviewer can challenge your reasoning and not just your conclusion.
+> 1. **Label every material statement.** `[OBSERVED]` (directly measured), `[DERIVED]` (logically follows — show the reasoning), `[HYPOTHESIS]` (plausible, unproven), `[ASSUMPTION]` (a gap you filled), `[UNVERIFIED]` (needed to close the analysis, not yet available). Never let an inference dress up as a measurement.
+> 2. **Temporal correlation is a lead, not a proof.** The deployment is the obvious suspect precisely because it is obvious. Test it like any other hypothesis and state what makes it more than coincidence.
+> 3. **Explain the 45-minute gap — do not skip past it.** Any causal story you propose must account for why impact began ~45 minutes after the deploy and not immediately. A delay is diagnostic information: it discriminates between failure modes. If your explanation doesn't use it, your explanation is incomplete.
+> 4. **Show the hypotheses you rejected and why.** Include the evidence against your own leading candidate. An RCA that only argues one way is advocacy, not analysis.
+> 5. **Separate the initiator from the amplifier.** Distinguish what started the incident from what made it severe. These usually have different owners and different fixes.
+> 6. **Give the root cause a numeric confidence, and justify the number** — specifically, say what stops it being higher.
+> 7. **No unsupported conclusions.** If the evidence doesn't reach, say so and put the missing item in the validation section rather than guessing quietly.
+> 8. **Blameless.** Analyse systems and controls, never individuals. If every gate the organisation had was passed, say that — it is the finding, not an excuse.
 >
-> **METHOD — work in this order, and show the work**
-> (1) Ask clarifying questions. (2) Map critical business capabilities, ranked by consequence of a 24-hour outage — not by technical size. (3) Map dependencies: technical, data, integration, *and* human/process/organizational. (4) Build the assumption register. (5) Build a risk register scored Likelihood × Impact across technical, operational, security, compliance and business categories. (6) Classify each component on **two separate axes** — modernization complexity (effort to rebuild) and migration risk (consequence of getting it wrong) — because sequencing depends on the gap between them. (7) Only then produce the phased roadmap.
+> **METHOD — in this order**
+> Build the timeline first → assemble the evidence → enumerate *all* candidate causes → test each against the evidence → only then name the most probable root cause → then contributing factors → then impact → then actions. Do not name a root cause before you have listed the alternatives; the ordering is the safeguard against premature closure.
 >
-> **OUTPUT**
-> A professional discovery-phase assessment for a modernization steering committee, in this structure:
-> `0.` Clarifying questions · `1.` Executive summary (3 findings that should shape the investment decision + one clear recommendation) · `2.` Critical business capabilities · `3.` Assumption register & validation plan · `4.` Dependency map (technical + human) · `5.` Risk register with mitigations · `6.` Component classification: complexity vs. migration risk, with sequencing rationale · `7.` Phased roadmap with gates and exit criteria · `8.` Rollback, contingency & business continuity · `9.` Compliance, regulatory & data-governance concerns · `10.` Traceability matrix · `11.` Immediate next actions (14 days).
-> Use tables wherever they beat prose. State an overall confidence level and the percentage of your material statements that are assumptions.
+> **OUTPUT — a formal RCA report with these sections**
+> `1.` Executive summary (what happened, most probable root cause, confidence, systemic finding) · `2.` Chronological incident timeline with evidence source per entry · `3.` Summary of what happened, in plain language a non-engineer can follow · `4.` Supporting technical evidence (signal / observed / baseline / interpretation) · `5.` Trigger events and candidate causes, including rejected ones, with verdicts · `6.` Most probable root cause + explicit causal chain + confidence and its justification · `7.` Contributing factors · `8.` Business and operational impact · `9.` Immediate containment actions · `10.` Corrective and preventive actions, clearly separated · `11.` Monitoring and alerting improvements — for each, state which minute of *this* timeline it would have fired at · `12.` Information required to validate uncertain conclusions, each with why it matters and who owns it · `13.` Closing systemic observation.
+> Use tables wherever they beat prose. Where a number is scenario detail rather than given evidence, label it.
 >
-> **SELF-CHECK BEFORE YOU ANSWER**
-> Have I invented any specific number, system name or artifact without labelling it? Is every risk mitigated with something *executable*, not a platitude? Does every phase have a rollback? Have I named the thing the client will not want to hear? If a recommendation cannot be traced to a finding, delete it.
+> **SELF-CHECK BEFORE ANSWERING**
+> Have I explained the 45-minute delay? Have I argued against my own conclusion? Is my confidence figure justified rather than decorative? Would every proposed action have changed the outcome, or is any of it a platitude? Have I distinguished the fix for *this* incident from the fix for this *class* of incident? Have I named anything that only reads as a person's mistake?
 >
 > **TONE**
-> Senior consultant briefing a steering committee: direct, unhedged where the evidence is strong, openly uncertain where it is not. No filler, no vendor optimism. If the honest answer is "you are not ready to fund this yet," say so.
+> Incident commander writing for engineering leadership. Direct, calm, specific. No hedging where evidence is strong; open uncertainty where it isn't. If the honest conclusion is "we cannot yet close this," say so and state exactly what would close it.
 
 ---
 
-## Q6 — Explanation (paste into "Enter your answer")
+## Q9 — Explanation (paste into "Enter your answer")
 
-**The problem it solves.** Legacy modernization projects don't usually fail on technology — they fail because decades of business logic live only in code, nobody can fully restate it, and no test proves it. Generic AI prompts make this worse: an LLM asked to "assess a legacy system" will confidently invent plausible-sounding detail, and in a claims platform an invented detail is indistinguishable from a real one until it reaches production. This prompt is engineered specifically to suppress that failure mode.
+**The problem it solves.** Under incident pressure, root cause analysis fails in a predictable way: the team blames the most recent change, ships a fix for that one thing, closes the ticket, and meets the same class of failure again six weeks later. LLMs make this worse, not better — given a deployment 45 minutes before an outage, a generic prompt will confidently declare the deployment the cause, because that is the statistically likely completion. It sounds authoritative and it is unfalsifiable. This prompt is engineered specifically to block that reflex.
 
-**How it works.** Five mechanisms do the load-bearing work:
+**How it works.** Five mechanisms do the real work:
 
-- **Role framing with a bias correction.** It doesn't just assign a persona — it tells the model its job is *not* to sell modernization. That single line steers the output away from the consultant-optimism register these models default to.
-- **Mandatory evidence tagging.** Every statement carries `[FACT] / [INFERRED] / [ASSUMPTION] / [UNKNOWN]`. This converts hallucination from an invisible defect into a visible, auditable label. It's the most important instruction in the prompt.
-- **The assumption register.** Each gap gets a blast radius, a test method, a named owner and a date — so gaps become a work plan instead of a caveat paragraph nobody reads.
-- **Forced two-axis classification.** Complexity and migration risk are scored separately, which is what makes sequencing defensible: the components you migrate first should be low-risk and high-learning, not high-value.
-- **Ordered method + self-check.** Analysis precedes recommendations, and the self-check makes the model delete any recommendation it can't trace to a finding.
+- **Mandatory evidence labelling.** `[OBSERVED] / [DERIVED] / [HYPOTHESIS] / [ASSUMPTION] / [UNVERIFIED]` on every material claim. This turns invented detail from an invisible risk into a visible label — which matters enormously, because an RCA is a document people make expensive decisions from.
+- **The 45-minute rule.** The prompt forces the model to *explain the delay*, not narrate past it. This is the sharpest instruction in the prompt: a gap between change and impact discriminates between failure modes — a hard config fault fails in seconds, a load-dependent regression fails on the traffic ramp. Requiring an explanation forces genuine mechanism reasoning instead of "deploy happened, then outage happened."
+- **Forced falsification.** The model must list rejected hypotheses with the evidence against them, and must state the evidence against its own leading candidate. Analysis that only argues one direction is advocacy.
+- **Initiator vs. amplifier split.** What *started* it and what *made it severe* are separated, because they have different owners and different fixes. Here: the code change started it; the undersized connection pool made it an outage instead of a slowdown.
+- **Ordering as a safeguard.** Timeline → evidence → all candidates → test → *then* root cause. The model is structurally prevented from naming a cause before enumerating alternatives, which is what premature closure actually looks like.
 
-**Key functionality.** Clarifying-question protocol that doesn't stall; capability mapping ranked by outage consequence; dependency mapping that includes *human* dependencies (key-person risk, undocumented workarounds, approval paths) — the category most assessments omit and most programs die on; risk register in business language; gated phased roadmap; rehearsed rollback at every gate; compliance and data-governance coverage; and a traceability matrix from recommendation back to evidence.
+**Key functionality.** Evidence-classified timeline with per-entry sourcing; hypothesis matrix with explicit verdicts including rule-outs; causal chain rather than a bare assertion; numeric confidence with a justification for why it isn't higher; corrective vs. preventive actions separated; monitoring improvements each mapped to the exact minute of the real timeline they would have fired at (which turns a wish-list into a costed argument); and a validation section that names the decisive test.
 
-**Expected output.** A structured 11-section discovery assessment resembling a professional consulting deliverable — executive summary, registers, tables, gated roadmap, traceability — with a stated confidence level and an explicit percentage of assumptions. Crucially, it is *falsifiable*: a reviewer can attack the reasoning, not just the conclusion.
+**Expected output.** A formal 13-section RCA report that reads like a mature engineering organisation's post-incident review — tables, labelled evidence, a stated confidence figure, and a standing caveat that the report should be revised rather than defended if the decisive test contradicts it.
 
-**Business value.** It compresses a 6–8 week discovery engagement into a first-draft baseline in minutes, and it de-risks the investment decision itself: leadership gets told what is known, what is guessed, and what must be validated before money is committed. It hard-blocks the big-bang cutover that causes the most expensive modernization failures, converts key-person risk into a dated action, and produces an audit trail regulators can follow. In short, its value is not that it writes a report faster — it's that it makes the organization's own ignorance visible early enough to be cheap.
+**Business value.** It compresses hours of incident-review synthesis into minutes while *raising* rigour rather than trading it away. Concretely: it shortens time-to-mitigation by giving responders a ranked causal hypothesis instead of a debate; it prevents the expensive failure mode of fixing the wrong thing confidently; it converts alerting gaps into a costed argument leadership can fund; and it produces an audit-quality record for SLA, compliance and customer conversations. Its deepest value is cultural — it is blameless by construction and it makes the organisation's own blind spots visible, which is the only thing that stops the same incident recurring with a different query.
