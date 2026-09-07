@@ -1,99 +1,57 @@
-**Terraform, for all of it** — not raw `az` commands. Let me explain why, since this connects to lessons you've already learned the hard way this project.
+I'll build all three pieces: the prompt (Q5), the explanation (Q6), and a polished sample-output document you can upload (Q7). Let me start the document build while I lay out the first two.
 
-## The reasoning
+That's your **Q7 upload** — a 12-page sample output. Now the two text answers.
 
-Every time you've applied something via CLI instead of Terraform, it created drift, and every drift incident this project has cost you real time (the TL's manual portal change, the image-tag mismatch, the frontend env vars set in the portal). You know this pattern now — **CLI changes are invisible to Terraform until someone syncs the code**, and that gap is where problems hide.
+---
 
-For genuine one-time bootstrapping problems (the remote-state chicken-and-egg, the frontend Key Vault access deadlock), CLI was the right call because Terraform literally couldn't do it yet. **None of today's security changes have that excuse** — CORS, ingress, and Cosmos network rules are all things Terraform can express directly and cleanly.
+## Q5 — The prompt (paste into "Enter your answer")
 
-## What each change looks like in Terraform
+> **ROLE**
+> You are a Principal Modernization Architect. You have spent 15 years leading mainframe-to-cloud transitions in regulated environments — health claims, banking, government benefits. You have personally seen migrations fail, and you have learned that they almost never fail for the reason the business case predicted. Your job here is not to sell modernization. It is to tell the truth about risk, including where you cannot see.
+>
+> **CONTEXT**
+> An organization runs a business-critical legacy claims-adjudication platform, decades old, grown by accretion. It spans custom applications, integrations, scheduled jobs, databases, manual workarounds staff perform without documenting, and business rules that exist only as code. Leadership wants scalability, maintainability, security and efficiency — without disrupting live operations. I will supply whatever artifacts I have; assume they are incomplete.
+>
+> **NON-NEGOTIABLE OPERATING PRINCIPLES**
+>
+> 1. **Evidence discipline.** Tag every material statement `[FACT]` (traceable to a supplied artifact), `[INFERRED]` (reasoned from evidence — state the reasoning), `[ASSUMPTION]` (you filled a gap — state it plainly) or `[UNKNOWN — VALIDATE]`. Never let an assumption wear the costume of a fact.
+> 2. **Assumptions are liabilities, not filler.** Every assumption goes in a register with: what breaks if it's wrong, how to test it, who owns the test, and by when. An unvalidated assumption in claims adjudication is not a documentation gap — it is an unpriced financial and regulatory liability.
+> 3. **Ask before you assume.** Open with up to 7 clarifying questions, ranked by how much the answer would change your recommendation. Then proceed anyway using clearly labelled assumptions — do not stall waiting for me.
+> 4. **No big-bang.** Recommend incremental, reversible change only. Every phase ends at a gate with evidence-based exit criteria and a rollback that has been *rehearsed*, not merely written. If you believe a big-bang cutover is defensible here, you must argue it explicitly against the blast radius.
+> 5. **Business language, not tech language.** Express risk as claims mispaid, statutory deadlines breached, providers unpaid, members harmed. A steering committee cannot act on "high coupling."
+> 6. **Include the humans.** Key-person concentration, retirement exposure, undocumented manual workarounds, and approval-path dependencies are first-class dependencies. Programs fail here more often than they fail on code.
+> 7. **Traceability.** Give every recommendation an ID and trace it back to the finding, dependency or risk that produced it, so a reviewer can challenge your reasoning and not just your conclusion.
+>
+> **METHOD — work in this order, and show the work**
+> (1) Ask clarifying questions. (2) Map critical business capabilities, ranked by consequence of a 24-hour outage — not by technical size. (3) Map dependencies: technical, data, integration, *and* human/process/organizational. (4) Build the assumption register. (5) Build a risk register scored Likelihood × Impact across technical, operational, security, compliance and business categories. (6) Classify each component on **two separate axes** — modernization complexity (effort to rebuild) and migration risk (consequence of getting it wrong) — because sequencing depends on the gap between them. (7) Only then produce the phased roadmap.
+>
+> **OUTPUT**
+> A professional discovery-phase assessment for a modernization steering committee, in this structure:
+> `0.` Clarifying questions · `1.` Executive summary (3 findings that should shape the investment decision + one clear recommendation) · `2.` Critical business capabilities · `3.` Assumption register & validation plan · `4.` Dependency map (technical + human) · `5.` Risk register with mitigations · `6.` Component classification: complexity vs. migration risk, with sequencing rationale · `7.` Phased roadmap with gates and exit criteria · `8.` Rollback, contingency & business continuity · `9.` Compliance, regulatory & data-governance concerns · `10.` Traceability matrix · `11.` Immediate next actions (14 days).
+> Use tables wherever they beat prose. State an overall confidence level and the percentage of your material statements that are assumptions.
+>
+> **SELF-CHECK BEFORE YOU ANSWER**
+> Have I invented any specific number, system name or artifact without labelling it? Is every risk mitigated with something *executable*, not a platitude? Does every phase have a rollback? Have I named the thing the client will not want to hear? If a recommendation cannot be traced to a finding, delete it.
+>
+> **TONE**
+> Senior consultant briefing a steering committee: direct, unhedged where the evidence is strong, openly uncertain where it is not. No filler, no vendor optimism. If the honest answer is "you are not ready to fund this yet," say so.
 
-**CORS** — already a plain `env` block value; just edit the string in `main.tf` (as I gave you earlier).
+---
 
-**Backend internal-only ingress** — the `external_enabled` attribute inside the `ingress` block of the `azurerm_container_app` resource. Also natively supported.
+## Q6 — Explanation (paste into "Enter your answer")
 
-**Cosmos network restriction** — the `azurerm_cosmosdb_account` resource supports `is_virtual_network_filter_enabled`, `network_acl_bypass_for_azure_services`, and `ip_range_filter` as first-class arguments. No need for a separate `az cosmosdb update` command.
+**The problem it solves.** Legacy modernization projects don't usually fail on technology — they fail because decades of business logic live only in code, nobody can fully restate it, and no test proves it. Generic AI prompts make this worse: an LLM asked to "assess a legacy system" will confidently invent plausible-sounding detail, and in a claims platform an invented detail is indistinguishable from a real one until it reaches production. This prompt is engineered specifically to suppress that failure mode.
 
-## The one exception — verification only
+**How it works.** Five mechanisms do the load-bearing work:
 
-The **only** CLI commands you should run are read-only ones, to *check* things before or after a Terraform change:
-```
-az containerapp show --name primaryddev-frontend ... --query "..." -o tsv
-```
+- **Role framing with a bias correction.** It doesn't just assign a persona — it tells the model its job is *not* to sell modernization. That single line steers the output away from the consultant-optimism register these models default to.
+- **Mandatory evidence tagging.** Every statement carries `[FACT] / [INFERRED] / [ASSUMPTION] / [UNKNOWN]`. This converts hallucination from an invisible defect into a visible, auditable label. It's the most important instruction in the prompt.
+- **The assumption register.** Each gap gets a blast radius, a test method, a named owner and a date — so gaps become a work plan instead of a caveat paragraph nobody reads.
+- **Forced two-axis classification.** Complexity and migration risk are scored separately, which is what makes sequencing defensible: the components you migrate first should be low-risk and high-learning, not high-value.
+- **Ordered method + self-check.** Analysis precedes recommendations, and the self-check makes the model delete any recommendation it can't trace to a finding.
 
-(to get the exact frontend FQDN for CORS)
-```
-az containerapp show --name primaryddev-backend ... --query "properties.configuration.ingress" -o json
-```
-(to verify ingress changed after apply)
+**Key functionality.** Clarifying-question protocol that doesn't stall; capability mapping ranked by outage consequence; dependency mapping that includes *human* dependencies (key-person risk, undocumented workarounds, approval paths) — the category most assessments omit and most programs die on; risk register in business language; gated phased roadmap; rehearsed rollback at every gate; compliance and data-governance coverage; and a traceability matrix from recommendation back to evidence.
 
-These **read** Azure's state to inform or confirm — they never **change** anything. That distinction (read vs. write) is the line: reads are always safe outside Terraform, writes should always go through Terraform for anything that isn't a one-time bootstrap problem.
+**Expected output.** A structured 11-section discovery assessment resembling a professional consulting deliverable — executive summary, registers, tables, gated roadmap, traceability — with a stated confidence level and an explicit percentage of assumptions. Crucially, it is *falsifiable*: a reviewer can attack the reasoning, not just the conclusion.
 
-## The complete Terraform-only sequence
-
-```
-git checkout dev
-git pull origin dev
-git checkout -b feature/security-hardening
-```
-
-**Get the exact frontend URL first (read-only, informs the edit):**
-```
-az containerapp show --name primaryddev-frontend --resource-group GENAI-B5-Project-T3-RG --query "properties.configuration.ingress.fqdn" -o tsv
-```
-
-**One combined prompt for all three changes:**
-```
-Make three changes in infra/modules/container_apps/main.tf and 
-infra/modules/cosmos/main.tf:
-
-1. In the BACKEND azurerm_container_app's env blocks, change 
-   CORS_ORIGINS value from "*" to 
-   "https://<exact-frontend-fqdn-from-az-command>"
-
-2. In the BACKEND azurerm_container_app's ingress block, change 
-   external_enabled from true to false.
-
-3. In infra/modules/cosmos/main.tf, on the azurerm_cosmosdb_account 
-   resource, add network_acl_bypass_for_azure_services = true (or the 
-   correct current attribute name for allowing Azure-service access - 
-   verify against current azurerm provider docs).
-
-Also add an output backend_internal_fqdn to 
-infra/modules/container_apps/outputs.tf pointing at 
-azurerm_container_app.backend.ingress[0].fqdn.
-
-Then update the FRONTEND container's BACKEND_BASE_URL env value to 
-reference that internal fqdn output instead of the hardcoded public URL.
-
-Show me all changed files.
-```
-
-**Then the careful plan/apply cycle:**
-```
-cd infra\envs\dev
-terraform plan
-```
-Read it fully — confirm backend ingress flips, frontend's `BACKEND_BASE_URL` updates, Cosmos gets the network setting, nothing destroyed.
-```
-terraform apply
-```
-
-**Then verify (read-only CLI, checking the result):**
-```
-az containerapp show --name primaryddev-backend --resource-group GENAI-B5-Project-T3-RG --query "properties.configuration.ingress.external" -o tsv
-```
-Should now show `false`.
-
-Open the frontend URL in a browser, confirm the app still works end-to-end.
-
-**Then commit:**
-```
-cd ../../..
-git add infra/
-git commit -m "Security hardening: restrict CORS, backend internal-only ingress, Cosmos network restriction"
-git push -u origin feature/security-hardening
-```
-→ PR to dev, with the security-notes doc included.
-
-So: Terraform for every actual change, CLI only to read/verify. Run the frontend-FQDN lookup first and tell me what it returns — then we finalize the exact CORS value before running the combined prompt.
+**Business value.** It compresses a 6–8 week discovery engagement into a first-draft baseline in minutes, and it de-risks the investment decision itself: leadership gets told what is known, what is guessed, and what must be validated before money is committed. It hard-blocks the big-bang cutover that causes the most expensive modernization failures, converts key-person risk into a dated action, and produces an audit trail regulators can follow. In short, its value is not that it writes a report faster — it's that it makes the organization's own ignorance visible early enough to be cheap.
